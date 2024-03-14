@@ -1,0 +1,18 @@
+{"DROID Version": "1.1",
+"oculus_params": {
+	"saving_target_info": true,
+	"pos_action_gain": 5,
+	"rot_action_gain": 2
+},
+"polymetis_params": {
+	"default_Kx": [400, 400, 400, 15, 15, 15]
+},
+"ik_params": {
+	"relative_max_joint_delta": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+	"max_lin_delta": 0.075,
+	"max_rot_delta": 0.15
+},
+"camera_params": {
+	"hand_camera_resolution": "HD720"
+	}
+}

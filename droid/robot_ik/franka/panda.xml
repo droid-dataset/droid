@@ -1,0 +1,79 @@
+<mujoco>
+  <compiler angle="radian" meshdir="./mesh" texturedir="./texture" />
+  <asset>
+    <mesh name="link0" file="link0.obj" />
+    <mesh name="link1" file="link1.obj" />
+    <mesh name="link2" file="link2.obj" />
+    <mesh name="link3" file="link3.obj" />
+    <mesh name="link4" file="link4.obj" />
+    <mesh name="link5" file="link5.obj" />
+    <mesh name="link6" file="link6.obj" />
+    <mesh name="link7" file="link7.obj" />
+    <mesh name="hand" file="hand.obj" />
+    <texture name="panda" file="panda.png" type="2d" />
+    <material name="panda" texture="panda" shininess=".4" specular=".4" />
+    <material name="panda_white" rgba="1 1 1 1" shininess="0.4" specular="0.4" />
+  </asset>
+  <default>
+    <velocity kv="10" ctrllimited="true" ctrlrange="-3.1415928 3.1415928" forcelimited='true'/>
+    <geom solref="0.002 1" solimp="0.95 0.99 0.001" conaffinity="1" friction="1.0 0.1 0.001" contype="1" condim="6" />
+  </default>
+  <worldbody>
+    <body name="panda_link0">
+      <site name="base_site" />
+      <geom type="mesh" material="panda" mesh="link0" />
+      <inertial pos="-4.1018e-02 -1.4e-04 4.9974e-02" mass="6.29769e-01" fullinertia="3.15e-03 3.88e-03 4.285e-03 8.2904e-07 1.5e-04 8.2299e-06" />
+      <body name="panda_link1" pos="0 0 0.333">
+        <inertial pos="3.875e-03 2.081e-03 -4.762e-02" mass="4.970684" fullinertia="7.0337e-01 7.0661e-01 9.1170e-03 -1.3900e-04 6.7720e-03 1.9169e-02" />
+        <joint name="panda_joint1" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0665" frictionloss="0.2450" />
+        <geom type="mesh" material="panda_white" mesh="link1" />
+        <body name="panda_link2" pos="0 0 0" quat="0.707107 -0.707107 0 0">
+          <inertial pos="-3.141e-03 -2.872e-02 3.495e-03" mass="0.646926" fullinertia="7.9620e-03 2.8110e-02 2.5995e-02 -3.9250e-03 1.0254e-02 7.0400e-04" />
+          <joint name="panda_joint2" pos="0 0 0" axis="0 0 1" limited="true" range="-1.7628 1.7628" damping="0.1987" frictionloss="0.1523" />
+          <geom type="mesh" material="panda_white" mesh="link2" />
+          <body name="panda_link3" pos="0 -0.316 0" quat="0.707107 0.707107 0 0">
+            <inertial pos="2.7518e-02 3.9252e-02 -6.6502e-02" mass="3.228604" fullinertia="3.7242e-02 3.6155e-02 1.0830e-02 -4.7610e-03 -1.1396e-02 -1.2805e-02" />
+            <joint name="panda_joint3" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0399" frictionloss="0.1827" />
+            <geom type="mesh" material="panda" mesh="link3" />
+            <body name="panda_link4" pos="0.0825 0 0" quat="0.707107 0.707107 0 0">
+              <inertial pos="-5.317e-02 1.04419e-01 2.7454e-02" mass="3.587895" fullinertia="2.5853e-02 1.9552e-02 2.8323e-02 7.7960e-03 -1.3320e-03 8.6410e-03" />
+              <joint name="panda_joint4" pos="0 0 0" axis="0 0 1" limited="true" range="-3.0718 -0.0698" damping="0.2257" frictionloss="0.3591" />
+              <geom type="mesh" material="panda" mesh="link4" />
+              <body name="panda_link5" pos="-0.0825 0.384 0" quat="0.707107 -0.707107 0 0">
+                <inertial pos="1.1953e-02 4.1065e-02 -3.8437e-02" mass="1.225946" fullinertia="3.5549e-02 2.9474e-02 8.6270e-03 -2.1170e-03 -4.0370e-03 2.2900e-04" />
+                <joint name="panda_joint5" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.1023" frictionloss="0.2669" />
+                <geom type="mesh" material="panda" mesh="link5" />
+                <body name="panda_link6" pos="0 0 0" quat="0.707107 0.707107 0 0">
+                  <inertial pos="6.0149e-02 -1.4117e-02 -1.0517e-02" mass="1.666555 " fullinertia="1.9640e-03 4.3540e-03 5.4330e-03 1.0900e-04 -1.1580e-03 3.4100e-04" />
+                  <joint name="panda_joint6" pos="0 0 0" axis="0 0 1" limited="true" range="-0.0175 3.7525" damping="-0.0132" frictionloss="0.1658" />
+                  <geom type="mesh" material="panda" mesh="link6" />
+                  <body name="panda_link7" pos="0.088 0 0" quat="0.707107 0.707107 0 0">
+                    <inertial pos="1.0517e-02 -4.252e-03 6.1597e-02" mass="7.35522e-01" fullinertia="1.2516e-02 1.0027e-02 4.8150e-03 -4.2800e-04 -1.1960e-03 -7.4100e-04" />
+                    <joint name="panda_joint7" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0638" frictionloss="1.2109" />
+                    <geom type="mesh" material="panda" mesh="link7" />
+                    <body name="panda_link8" pos="0 0 0.107">
+                      <body name="panda_hand" euler="0 0 -0.785398163397">
+                        <inertial pos="-1e-02 0 3e-02" mass="7.3e-01" diaginertia="1e-03 2.5e-03 1.7e-03" />
+                        <geom type="mesh" material="panda" mesh="hand" />
+                        <site name="wrist_site"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <velocity forcerange="-87 87" joint="panda_joint1" name="panda_joint1" />
+    <velocity forcerange="-87 87" joint="panda_joint2" name="panda_joint2" />
+    <velocity forcerange="-87 87" joint="panda_joint3" name="panda_joint3" />
+    <velocity forcerange="-87 87" joint="panda_joint4" name="panda_joint4" />
+    <velocity forcerange="-12 12" joint="panda_joint5" name="panda_joint5" />
+    <velocity forcerange="-12 12" joint="panda_joint6" name="panda_joint6" />
+    <velocity forcerange="-12 12" joint="panda_joint7" name="panda_joint7" />
+  </actuator>
+</mujoco>

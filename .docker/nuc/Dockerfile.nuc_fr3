@@ -1,0 +1,77 @@
+# pull ubuntu base image
+FROM ubuntu:bionic
+
+# set robot parameters
+ENV ROBOT_TYPE=fr3
+ENV LIBFRANKA_VERSION=0.10.0
+ENV ROBOT_IP=172.16.0.1 
+ENV NUC_IP=172.16.0.2
+
+# set directory structure
+ARG NUC_POLYMETIS_DIR=/app/droid/fairo/polymetis
+ARG NUC_ROBOT_CONFIG_DIR=/app/config/${ROBOT_TYPE}
+ARG NUC_POLYMETIS_CONFIG_DIR=${NUC_POLYMETIS_DIR}/polymetis/conf
+
+# base system installations
+RUN apt-get update && \
+    apt-get install -y software-properties-common build-essential sudo git curl wget python3-pip libspdlog-dev \
+    libeigen3-dev lsb-release ffmpeg libsm6 libxext6 && \
+    apt-get upgrade -y
+
+# install latest cmake version
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null && \
+    apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' && \  
+    apt-get update && \
+    apt-get install -y cmake
+
+# copy project code to container
+COPY . /app
+WORKDIR /app
+
+# install miniconda 
+RUN wget \
+    https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    && mkdir /root/.conda \
+    && bash Miniconda3-latest-Linux-x86_64.sh -b \
+    && rm -f Miniconda3-latest-Linux-x86_64.sh
+ENV PATH /root/miniconda3/bin:$PATH
+
+# setup polymetis conda env
+WORKDIR ${NUC_POLYMETIS_DIR}
+RUN conda env create -f ./polymetis/environment.yml && \
+    conda run -n polymetis-local pip install -e ./polymetis
+SHELL ["conda", "run", "-n", "polymetis-local", "/bin/bash", "-c"]
+
+# build libfranka and polymetis
+RUN ./scripts/build_libfranka.sh ${LIBFRANKA_VERSION} && \
+    mkdir -p ./polymetis/build && \
+    cd ./polymetis/build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FRANKA=ON -DBUILD_TESTS=ON -DBUILD_DOCS=ON && \
+    make -j
+
+# set polymetis config files
+WORKDIR /app
+RUN cp ${NUC_ROBOT_CONFIG_DIR}/franka_hardware.yaml ${NUC_POLYMETIS_CONFIG_DIR}/robot_client/franka_hardware.yaml && \
+    cp ${NUC_ROBOT_CONFIG_DIR}/franka_panda.yaml ${NUC_POLYMETIS_CONFIG_DIR}/robot_model/franka_panda.yaml
+
+# python environment setup 
+RUN pip3 install -e . && \
+    pip3 install dm-robotics-moma==0.5.0 --no-deps && \
+    pip3 install dm-robotics-transformations==0.5.0 --no-deps && \
+    pip3 install dm-robotics-agentflow==0.5.0 --no-deps && \
+    pip3 install dm-robotics-geometry==0.5.0 --no-deps && \
+    pip3 install dm-robotics-manipulation==0.5.0 --no-deps && \
+    pip3 install dm-robotics-controllers==0.5.0 --no-deps
+
+# using miniconda instead of anaconda so overwrite sh scripts
+RUN find /app/droid/franka -type f -name "launch_*.sh" -exec sed -i 's/anaconda/miniconda/g' {} \;
+RUN find /app/scripts/server -type f -name "launch_server.sh" -exec sed -i 's/anaconda/miniconda/g' {} \;
+
+# set absolute paths
+RUN find /app/droid/franka -type f -name "launch_*.sh" -exec sed -i 's|~|/root|g' {} \;
+RUN find /app/scripts/server -type f -name "launch_server.sh" -exec sed -i 's|~|/root|g' {} \;
+
+# start the server
+RUN chmod +x /app/scripts/server/launch_server.sh
+ENTRYPOINT ["/app/scripts/server/launch_server.sh"]
+

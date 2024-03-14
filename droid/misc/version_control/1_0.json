@@ -1,0 +1,18 @@
+{"DROID Version": "1.0",
+"oculus_params": {
+	"saving_target_info": false,
+	"pos_action_gain": 3,
+	"rot_action_gain": 3
+	},
+"polymetis_params": {
+	"default_Kx": [750, 750, 750, 15, 15, 15]
+	},
+"ik_params": {
+	"relative_max_joint_delta": [0.2075, 0.2075, 0.2075, 0.2075, 0.251, 0.251, 0.251],
+	"max_lin_delta": 0.125,
+	"max_rot_delta": 0.15
+	},
+"camera_params": {
+	"hand_camera_resolution": "VGA"
+	}
+}

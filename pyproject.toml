@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "droid"
+authors = [
+    {name = "Alexander Khazatsky "}
+]
+description = "Residential Robot Demonstration Dataset"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["robotics"]
+dependencies = [
+    "boto3",
+    "customtkinter",
+    "dm-control==1.0.5",
+    "gym",
+    "h5py",
+    "imageio",
+    "matplotlib",
+    "mujoco==2.3.2",
+    "open3d",
+    "opencv-python==4.6.0.66",
+    "opencv-contrib-python==4.6.0.66",
+    "Pillow",
+    "protobuf==3.20.1",
+    "psutil",
+    "pyrallis",
+    "scipy",
+    "tqdm",
+    "zerorpc",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black[jupyter]",
+    "ipython",
+    "pre-commit",
+    "ruff",
+]
+postprocessing = [
+    "scikit-image",
+]
+
+[project.urls]
+homepage = "https://github.com/AlexanderKhazatsky/DROID"
+repository = "https://github.com/AlexanderKhazatsky/DROID"
+documentation = "https://github.com/AlexanderKhazatsky/DROID"
+
+[tool.black]
+line-length = 121
+target-version = ["py37", "py38", "py39", "py310"]
+preview = true
+
+[tool.ruff]
+line-length = 121
+target-version = "py38"
+select = ["A", "B", "C90", "E", "F", "I", "RUF", "W"]
+ignore = ["F405", "B006", "C901", "F403", "E722"]
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
+
+[tool.isort]
+profile = "black"
+line_length = 121
+skip = ["__init__.py"]
+filter_files = true
+py_version = "all"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["cache"]

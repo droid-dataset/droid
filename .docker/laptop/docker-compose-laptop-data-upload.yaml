@@ -1,0 +1,34 @@
+version: "3"
+
+services: 
+  laptop_setup:
+    image: ghcr.io/alexanderkhazatsky/droid:laptop_fer
+    environment:
+      ROOT_DIR: ${ROOT_DIR}
+      DISPLAY: ${DISPLAY}
+      XAUTHORITY: ${DOCKER_XAUTH}
+      ROBOT_TYPE: ${ROBOT_TYPE}
+      LIBFRANKA_VERSION: ${LIBFRANKA_VERSION}
+      NUC_IP: ${NUC_IP}
+      ROBOT_IP: ${ROBOT_IP}
+      LAPTOP_IP: ${LAPTOP_IP}
+      NVIDIA_VISIBLE_DEVICES: all
+      ANDROID_ADB_SERVER_ADDRESS: host.docker.internal
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${DOCKER_XAUTH}:${DOCKER_XAUTH}
+      - ${ROOT_DIR}/droid/misc/parameters.py:/app/droid/misc/parameters.py
+      - ${ROOT_DIR}/droid/calibration/calibration_info.json:/app/droid/calibration/calibration_info.json
+      - ${ROOT_DIR}/data:/app/data
+      - ${ROOT_DIR}/cache:/app/cache
+      - ${ROOT_DIR}/droid-credentials.json:/app/droid-credentials.json
+      - ${ROOT_DIR}/scripts/postprocess.py:/app/scripts/postprocess.py
+    build: 
+      context: ../../
+      dockerfile: .docker/laptop/Dockerfile.laptop
+    devices:
+      - "/dev:/dev"
+    runtime: nvidia
+    privileged: true
+    network_mode: "host"
+    command: python /app/scripts/postprocess.py
