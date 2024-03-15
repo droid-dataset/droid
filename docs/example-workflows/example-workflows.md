@@ -14,5 +14,4 @@ The goal of the workflow guides is to enable users/developers to operate the DRO
 1. [Teleoperating the Robot](https://droid-dataset.github.io/droid/example-workflows/teleoperation.html): a guide on using the Oculus Quest 2 to teleoperate the robot. 
 2. [Calibration Cameras](https://droid-dataset.github.io/droid/example-workflows/calibrating-cameras.html): a guide on calibrating the extrinsic parameter of cameras.
 3. [Collecting Data](https://droid-dataset.github.io/droid/example-workflows/data-collection.html): a guide on using the GUI to collect task demonstrations.
-4. [Training Policies](https://droid-dataset.github.io/droid/example-workflows/training-policies.html): a guide on training policies using the DROID.
-5. [Evaluating Policies](https://droid-dataset.github.io/droid/example-workflows/evaluating-policies.html): a guide on evaluating policies using the DROID. 
+4. [Training & Evaluating Policies](https://droid-dataset.github.io/droid/example-workflows/training-policies.html): a guide on training and evaluating policies using the DROID.
