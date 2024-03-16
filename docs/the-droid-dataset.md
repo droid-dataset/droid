@@ -31,36 +31,16 @@ gsutil -m cp -r gs://gresearch/robotics/droid_100 <path_to_your_target_dir>
 gsutil -m cp -r gs://gresearch/robotics/droid_raw <path_to_your_target_dir>
 ```
 
-
 ### Accessing RLDS Dataset
 
 We provide a [Dataset Colab](https://colab.research.google.com/drive/1b4PPH4XGht4Jve2xPKMCh-AXXAQziNQa?usp=sharing) that walks you through the process of loading and visualizing a few samples from the DROID dataset. 
 
 We also provide an example of a "training-ready" data loader that allows for efficient loading of DROID data for policy training (in PyTorch and JAX), including parallelized loading, normalization and augmentation in our [policy learning repo](https://github.com/droid-dataset/droid_policy_learning/blob/master/examples/droid_dataloader.py).
 
-### Accessing Raw Data
-
-You can download the raw DROID data using the gsutil command listed above. It contains full-HD stereo videos for all three cameras, alongside with all other information contained in the RLDS dataset. Concretely, each episode folder contains the following information:
-```
-episode:
-   |
-   |---- metadata_*.json: Episode metadata like building ID, data collector ID etc.
-   |---- trajectory.h5: All low-dimensional information like action and proprioception trajectories.
-   |---- recordings:
-             |
-             |---- MP4:
-             |      |
-             |      |---- *.mp4: High-res video of single (left) camera view.
-             |      |---- *-stereo.mp4: High-res video of concatenated stereo camera views.
-             |
-             |---- SVO:
-                    |
-                    |---- *.svo: Raw ZED SVO file with encoded camera recording information (contains some additional metadata)
-
-```
 
 ## 📝 Dataset Schema
 
+The following fields are contained in every RLDS episode:
 ```python
 DROID = {
         "episode_metadata": {
@@ -96,6 +76,27 @@ DROID = {
                 "action": tf.Tensor(7, dtype=float64), # robot action, consists of [6x joint velocities, 1x gripper position]
 	},
 }
+```
+
+### Accessing Raw Data
+
+You can download the raw DROID data using the gsutil command listed above. It contains full-HD stereo videos for all three cameras, alongside with all other information contained in the RLDS dataset. Concretely, each episode folder contains the following information:
+```
+episode:
+   |
+   |---- metadata_*.json: Episode metadata like building ID, data collector ID etc.
+   |---- trajectory.h5: All low-dimensional information like action and proprioception trajectories.
+   |---- recordings:
+             |
+             |---- MP4:
+             |      |
+             |      |---- *.mp4: High-res video of single (left) camera view.
+             |      |---- *-stereo.mp4: High-res video of concatenated stereo camera views.
+             |
+             |---- SVO:
+                    |
+                    |---- *.svo: Raw ZED SVO file with encoded camera recording information (contains some additional metadata)
+
 ```
 
 ## 📄 Data Analysis and Further Information
