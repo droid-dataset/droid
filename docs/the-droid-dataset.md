@@ -27,7 +27,7 @@ gsutil -m cp -r gs://gresearch/robotics/droid <path_to_your_target_dir>
 # Example 100 episodes from the DROID dataset in RLDS for debugging (2GB)
 gsutil -m cp -r gs://gresearch/robotics/droid_100 <path_to_your_target_dir>
 
-# Raw DROID dataset in stereo HD, stored as MP4 videos (2TB)
+# Raw DROID dataset in stereo HD, stored as MP4 videos (27TB)
 gsutil -m cp -r gs://gresearch/robotics/droid_raw <path_to_your_target_dir>
 ```
 
@@ -98,6 +98,8 @@ episode:
                     |---- *.svo: Raw ZED SVO file with encoded camera recording information (contains some additional metadata)
 
 ```
+
+**Note**: We realized that we missed 20% of episodes when face-blurring & copying the *raw* DROID data to the release bucket and are working on uploading the remainder of the dataset. This only affects the *raw* version of DROID, the RLDS version is complete. This should be fixed within a few days -- please reach out to pertsch@berkeley.edu if you have any concerns in the meantime!
 
 ## 📄 Data Analysis and Further Information
 Please consult the [paper](https://droid-dataset.github.io/paper.pdf) for detailed data analysis and further information about the dataset.
