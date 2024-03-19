@@ -106,10 +106,10 @@ Complete the following parameters in `./config/<robot_type>/franka_hardware.yaml
 
 ## Run Setup Script
 
-To complete the device setup execute the setup script through running the following:
+To complete the device setup execute the setup script with elevated privileges through running the following:
 
 ```bash
-./scripts/setup/nuc_setup.sh
+sudo ./scripts/setup/nuc_setup.sh
 ```
 
 # Configuring the Laptop/Workstation 
@@ -158,10 +158,10 @@ Complete the following parameters in `./config/<robot_type>/franka_hardware.yaml
 
 ## Run Setup Script
 
-To complete the device setup execute the setup script through running the following:
+To complete the device setup execute the setup script with elevated privileges through running the following:
 
 ```bash
-./scripts/setup/laptop_setup.sh
+sudo ./scripts/setup/laptop_setup.sh
 ```
 
 # Testing/Validating Entire Setup
