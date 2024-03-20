@@ -17,12 +17,12 @@ We recognise that some users may not already be familiar with Docker, the syntax
 * [Docker Compose Overview](https://docs.docker.com/compose/)
 
 # NUC Setup
-In order to set up the control server on your NUC run `sudo ./nuc_setup.sh` from this [directory](https://github.com/AlexanderKhazatsky/DROID/tree/main/scripts/setup). Running through all the steps in this script will install host system dependencies and ensure the control server runs automatically in a docker container each time your machine is booted.
+In order to set up the control server on your NUC run `sudo ./nuc_setup.sh` from this [directory](https://github.com/droid-dataset/droid/tree/main/scripts/setup). Running through all the steps in this script will install host system dependencies and ensure the control server runs automatically in a docker container each time your machine is booted.
 
 Further details on the steps in README.md in the `scripts/setup` directory.
 
 # Laptop Setup  
-In order to set up the user client on your laptop run `sudo ./laptop_setup.sh` from this [directory](https://github.com/AlexanderKhazatsky/DROID/tree/main/scripts/setup). Running through all the steps in this script will install host system dependencies and ensure the user client can be run in a docker container.
+In order to set up the user client on your laptop run `sudo ./laptop_setup.sh` from this [directory](https://github.com/droid-dataset/droid/tree/main/scripts/setup). Running through all the steps in this script will install host system dependencies and ensure the user client can be run in a docker container.
 
-Further details can be found [README.md](https://github.com/AlexanderKhazatsky/DROID/tree/main/scripts/setup/README.md).
+Further details can be found [README.md](https://github.com/droid-dataset/droid/tree/main/scripts/setup/README.md).
 

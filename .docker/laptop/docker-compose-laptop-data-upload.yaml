@@ -2,7 +2,7 @@ version: "3"
 
 services: 
   laptop_setup:
-    image: ghcr.io/alexanderkhazatsky/droid:laptop_fer
+    image: ghcr.io/droid-dataset/droid_laptop:${ROBOT_TYPE}
     environment:
       ROOT_DIR: ${ROOT_DIR}
       DISPLAY: ${DISPLAY}

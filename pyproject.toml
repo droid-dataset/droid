@@ -7,7 +7,7 @@ name = "droid"
 authors = [
     {name = "Alexander Khazatsky "}
 ]
-description = "Residential Robot Demonstration Dataset"
+description = "Distributed Robot Interaction Dataset"
 version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -45,9 +45,9 @@ postprocessing = [
 ]
 
 [project.urls]
-homepage = "https://github.com/AlexanderKhazatsky/DROID"
-repository = "https://github.com/AlexanderKhazatsky/DROID"
-documentation = "https://github.com/AlexanderKhazatsky/DROID"
+homepage = "https://github.com/droid-dataset/droid"
+repository = "https://github.com/droid-dataset/droid"
+documentation = "https://github.com/droid-dataset/droid"
 
 [tool.black]
 line-length = 121
