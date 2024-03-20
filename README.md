@@ -5,7 +5,7 @@ This repository contains the code for setting up your DROID robot platform and u
 If you are interested in using the DROID dataset for training robot policies, please check out our [policy learning repo](https://github.com/droid-dataset/droid_policy_learning).
 For more information about DROID, please see the following links: 
 
-[**[Homepage]**](https://droid-dataset.github.io) &ensp; [**[Documentation]**](https://droid-dataset.github.io/droid) &ensp; [**[Paper]**](https://droid-dataset.github.io/paper) &ensp; [**[Dataset Visualizer]**](https://droid-dataset.github.io/dataset.html).
+[**[Homepage]**](https://droid-dataset.github.io) &ensp; [**[Documentation]**](https://droid-dataset.github.io/droid) &ensp; [**[Paper]**](https://arxiv.org/abs/2403.12945) &ensp; [**[Dataset Visualizer]**](https://droid-dataset.github.io/dataset.html).
 
 ![](https://droid-dataset.github.io/droid/assets/index/droid_teaser.jpg)
 
