@@ -42,7 +42,7 @@ class RecordedMultiCameraWrapper:
         for cam_id in all_cam_ids:
             cam_type = camera_type_dict[cam_id]
             curr_cam_kwargs = self.camera_kwargs.get(cam_type, {})
-            self.camera_dict[cam_id].set_reading_parameters(**curr_cam_kwargs)
+            self.camera_dict[cam_id].set_reading_parameters(**curr_cam_kwargs, depth=True)
 
             timestamp = timestamp_dict.get(cam_id + "_frame_received", None)
             if index is not None:
