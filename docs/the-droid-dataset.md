@@ -27,7 +27,7 @@ gsutil -m cp -r gs://gresearch/robotics/droid <path_to_your_target_dir>
 # Example 100 episodes from the DROID dataset in RLDS for debugging (2GB)
 gsutil -m cp -r gs://gresearch/robotics/droid_100 <path_to_your_target_dir>
 
-# Raw DROID dataset in stereo HD, stored as MP4 videos (27TB)
+# Raw DROID dataset in stereo HD, stored as MP4 videos (8.7TB)
 gsutil -m cp -r gs://gresearch/robotics/droid_raw <path_to_your_target_dir>
 ```
 
