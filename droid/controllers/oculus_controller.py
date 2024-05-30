@@ -48,7 +48,7 @@ class VRPolicy:
     def reset_state(self):
         self._state = {
             "poses": {},
-            "buttons": {"A": False, "B": False},
+            "buttons": {"A": False, "B": False, "X": False, "Y": False},
             "movement_enabled": False,
             "controller_on": True,
         }
@@ -72,25 +72,25 @@ class VRPolicy:
                 continue
 
             # Determine Control Pipeline #
-            toggled = self._state["movement_enabled"] != buttons["RG"]
-            self.update_sensor = self.update_sensor or buttons["RG"]
-            self.reset_orientation = self.reset_orientation or buttons["RJ"]
+            toggled = self._state["movement_enabled"] != buttons[self.controller_id.upper() + "G"]
+            self.update_sensor = self.update_sensor or buttons[self.controller_id.upper() + "G"]
+            self.reset_orientation = self.reset_orientation or buttons[self.controller_id.upper() + "J"]
             self.reset_origin = self.reset_origin or toggled
 
             # Save Info #
             self._state["poses"] = poses
             self._state["buttons"] = buttons
-            self._state["movement_enabled"] = buttons["RG"]
+            self._state["movement_enabled"] = buttons[self.controller_id.upper() + "G"]
             self._state["controller_on"] = True
             last_read_time = time.time()
 
             # Update Definition Of "Forward" #
-            stop_updating = self._state["buttons"]["RJ"] or self._state["movement_enabled"]
+            stop_updating = self._state["buttons"][self.controller_id.upper() + "J"] or self._state["movement_enabled"]
             if self.reset_orientation:
                 rot_mat = np.asarray(self._state["poses"][self.controller_id])
                 if stop_updating:
                     self.reset_orientation = False
-                # try to invert the rotation matrix, if not possible, then just use the identity matrix                
+                # try to invert the rotation matrix, if not possible, then just use the identity matrix
                 try:
                     rot_mat = np.linalg.inv(rot_mat)
                 except:
@@ -104,7 +104,7 @@ class VRPolicy:
         rot_mat = self.global_to_env_mat @ self.vr_to_global_mat @ rot_mat
         vr_pos = self.spatial_coeff * rot_mat[:3, 3]
         vr_quat = rmat_to_quat(rot_mat[:3, :3])
-        vr_gripper = self._state["buttons"]["rightTrig"][0]
+        vr_gripper = self._state["buttons"]["rightTrig" if self.controller_id == "r" else "leftTrig"][0]
 
         self.vr_state = {"pos": vr_pos, "quat": vr_quat, "gripper": vr_gripper}
 
@@ -151,7 +151,7 @@ class VRPolicy:
         euler_action = quat_to_euler(quat_action)
 
         # Calculate Gripper Action #
-        gripper_action = self.vr_state["gripper"] - robot_gripper
+        gripper_action = (self.vr_state["gripper"] * 1.5) - robot_gripper
 
         # Calculate Desired Pose #
         target_pos = pos_action + robot_pos
@@ -178,8 +178,8 @@ class VRPolicy:
 
     def get_info(self):
         return {
-            "success": self._state["buttons"]["A"],
-            "failure": self._state["buttons"]["B"],
+            "success": self._state["buttons"]["A"] if self.controller_id == 'r' else self._state["buttons"]["X"],
+            "failure": self._state["buttons"]["B"] if self.controller_id == 'r' else self._state["buttons"]["Y"],
             "movement_enabled": self._state["movement_enabled"],
             "controller_on": self._state["controller_on"],
         }
