@@ -8,8 +8,10 @@ returning a JSON-serializable data record.
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Tuple
+import os
 
 import h5py
+import json
 
 from droid.postprocessing.schema import TRAJECTORY_SCHEMA
 
@@ -41,6 +43,30 @@ def parse_user(
     except (KeyError, OSError, RuntimeError):
         # Invalid/Incomplete HDF5 File --> return invalid :: (None, None)
         return None, None
+
+def parse_existing_metadata(trajectory_dir: str):
+    dir_path = os.path.abspath(trajectory_dir)
+    all_filepaths = [entry.path for entry in os.scandir(dir_path) if entry.is_file()]
+    for filepath in all_filepaths:
+        if 'metadata' in filepath:
+            with open(filepath) as json_file:
+                metadata = json.load(json_file)
+            return metadata
+    return None
+
+def parse_data_directory(data_dir: str, lab_agnostic: bool = False, process_failures: bool = False):
+    if lab_agnostic:
+        data_dirs = [p for p in data_dir.iterdir() if p.is_dir()]
+    else:
+        data_dirs = [data_dir]
+
+    paths_to_index = []
+    for curr_dir in data_dirs:
+        paths_to_index += [(p, p.name) for p in [curr_dir / "success"]]
+        if process_failures:
+            paths_to_index += [(p, p.name) for p in [curr_dir / "failure"]]
+
+    return paths_to_index
 
 
 def parse_timestamp(trajectory_dir: Path) -> str:
