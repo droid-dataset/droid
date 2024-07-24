@@ -102,4 +102,4 @@ episode:
 **Note**: We realized that we missed 20% of episodes when face-blurring & copying the *raw* DROID data to the release bucket and are working on uploading the remainder of the dataset. This only affects the *raw* version of DROID, the RLDS version is complete. This should be fixed within a few days -- please reach out to pertsch@berkeley.edu if you have any concerns in the meantime!
 
 ## 📄 Data Analysis and Further Information
-Please consult the [paper](https://droid-dataset.github.io/paper.pdf) for detailed data analysis and further information about the dataset.
+Please consult the [paper](https://arxiv.org/abs/2403.12945) for detailed data analysis and further information about the dataset.
