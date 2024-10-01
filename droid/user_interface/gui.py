@@ -24,12 +24,20 @@ from droid.user_interface.text import *
 
 
 class RobotGUI(tk.Tk):
-    def __init__(self, robot=None, fullscreen=False):
+    def __init__(self, robot=None, fullscreen=False, right_controller=True):
         # Initialize #
         super().__init__()
         self.geometry("1500x1200")
         self.attributes("-fullscreen", fullscreen)
         self.bind("<Escape>", lambda e: self.destroy())
+        if right_controller:
+            self.oculus_controller = "right"
+            self.button_a = "A"
+            self.button_b = "B"
+        else:
+            self.oculus_controller = "left"
+            self.button_a = "X"
+            self.button_b = "Y"
 
         # Prepare Relevent Items #
         self.num_traj_saved = 0
@@ -313,7 +321,7 @@ class CanRobotResetPage(tk.Frame):
         title_lbl = Label(self, text="Proceed With Robot Reset?", font=Font(size=30, weight="bold"))
         title_lbl.pack(pady=15)
 
-        description_lbl = Label(self, text="Press 'A' when ready", font=Font(size=18))
+        description_lbl = Label(self, text="Press '" + self.controller.button_a + "' when ready", font=Font(size=18))
         description_lbl.pack(pady=5)
 
     def set_next_page(self, page):
@@ -827,7 +835,8 @@ class RequestedBehaviorPage(tk.Frame):
         task_lbl.place(relx=0.5, rely=0.4, anchor="center")
 
         # Instructions #
-        instr_lbl = tk.Label(self, text="Press 'A' to begin, or 'B' to resample", font=Font(size=20, slant="italic"))
+        instr_lbl = tk.Label(self, text="Press '" + self.controller.button_a + "' to begin, or '" +
+                                        self.controller.button_b + "' to resample", font=Font(size=20, slant="italic"))
         instr_lbl.place(relx=0.5, rely=0.1, anchor="n")
 
         # Change Status Box #
@@ -1145,8 +1154,16 @@ class CameraPage(tk.Frame):
         self.timer.place_forget()
 
         # Update Text #
-        self.title_str.set(camera_page_title[self.mode])
-        self.instr_str.set(camera_page_instr[self.mode])
+        title = camera_page_title[self.mode]
+
+        instr = camera_page_instr[self.mode]
+        if self.controller.oculus_controller == "left":
+            if self.mode == 'traj' or self.mode == 'practice_traj':
+                instr = instr.replace("A", "X")
+                instr = instr.replace("B", "Y")
+
+        self.title_str.set(title)
+        self.instr_str.set(instr)
 
         # Add Mode Specific Stuff #
         if "traj" in self.mode:
@@ -1342,7 +1359,8 @@ class CalibrateCamera(tk.Frame):
 
         cam_name = get_camera_name(self.cam_id)
         self.title_str.set("Calibrating Camera: " + cam_name)
-        self.instr_str.set("Press 'A' to begin camera calibration, and 'B' to terminate early")
+        self.instr_str.set("Press '" + self.controller.button_a + "' to begin camera calibration, and '" +
+                           self.controller.button_b + "' to terminate early")
         success = self.controller.robot.calibrate_camera(self.cam_id, reset_robot=False)
 
         self.end_trajectory(success)
@@ -1359,13 +1377,15 @@ class CalibrateCamera(tk.Frame):
             self.controller.frames[CanRobotResetPage].set_next_page(CalibrateCamera)
             self.controller.show_frame(CanRobotResetPage)
             self.title_str.set("CALIBRATION FAILED")
-            self.instr_str.set("Press 'A' to retry, or 'B' to go back to the calibration hub")
+            self.instr_str.set("Press '" + self.controller.button_a + "' to retry, or '" + self.controller.button_b +
+                               "' to go back to the calibration hub")
             self.back_btn.place(relx=0.5, rely=0.85, anchor="n")
 
     def set_camera_id(self, cam_id):
         cam_name = get_camera_name(cam_id)
         self.title_str.set("Camera View: " + cam_name)
-        self.instr_str.set("Press 'A' to begin, or 'B' to go back to the calibration hub")
+        self.instr_str.set("Press '" + self.controller.button_a + "' to begin, or '" + self.controller.button_b +
+                           "' to go back to the calibration hub")
         self.back_btn.place(relx=0.5, rely=0.85, anchor="n")
         self.relevant_indices = []
         self.cam_id = cam_id
