@@ -4,14 +4,21 @@ Script for extracting MP4 data from SVO files.
 Performs the following:
     - Checks for "cached" uploads in `DROID/cache/<lab>-cache.json; avoids repetitive work.
     - Parses out relevant metadata from each trajectory --> *errors* on "unexpected format" (fail-fast).
-    - Converts all SVO files to the relevant MP4s --> logs "corrupt" data (silent).
+    - Converts all SVO files to the relevant Depth --> logs "corrupt" data (silent).
     - Runs validation logic on all *new* demonstrations --> errors on "corrupt" data (fail-fast).
     - Writes JSON metadata for all *new* demonstrations for easy data querying.
     - Uploads each demonstration "day" data to Amazon S3 bucket and updates `DROID/cache/<lab>-cache.json`.
 
+IMPORTANT INFORMATION:
+    - Resizing is done through the ZED SDK. Make sure you keep this consistent during policy evaluation.
+    - Depth is given in millimeters, but before saving it we multiple the values by 1000 and convert to uint16
+    - Upon decoding the depth, you should divide the values by 1000 to return to millimeters
+
 Note :: Must run on hardware with the ZED SDK; highly recommended to run this on the data collection laptop directly!
 
-Run from DROID directory root with: `python scripts/convert/svo_to_mp4.py'
+Run from DROID directory root with: `python scripts/convert/svo_to_depth.py'
+
+
 """
 
 import json
@@ -62,8 +69,10 @@ class DROIDConversionConfig:
 
     # Processing Details
     process_failures: bool = False                  # Whether to include failures in the processing stage
-    extract_MP4_data: bool = True                   # Whether to extract MP4 data from the SVO files
-    extract_depth_data: bool = False                # Whether to extract depth data from the SVO files
+    extract_MP4_data: bool = False                  # Whether to extract MP4 data from the SVO files
+    extract_depth_data: bool = True                 # Whether to extract depth data from the SVO files
+    depth_resolution: tuple = (0,0)                 # Resolution to extract depth data at, use a value of (0,0) to avoid resizing
+    depth_frequency: int = 1                        # The timestep frequency at which we extract depth data
 
     # Important :: Only update once you're sure *all* demonstrations prior to this date have been processed!
     #   > If not running low on disk, leave alone!
@@ -135,6 +144,8 @@ def postprocess(cfg: DROIDConversionConfig) -> None:
                 errored_paths=cache["errored_paths"],
                 extract_MP4_data=cfg.extract_MP4_data,
                 extract_depth_data=cfg.extract_depth_data,
+                depth_resolution=cfg.depth_resolution,
+                depth_frequency=cfg.depth_frequency,
                 search_existing_metadata=True,
             )
         else:

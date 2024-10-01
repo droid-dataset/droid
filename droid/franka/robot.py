@@ -37,6 +37,7 @@ class FrankaRobot:
         self._gripper = GripperInterface(ip_address="localhost")
         self._max_gripper_width = self._gripper.metadata.max_width
         self._ik_solver = RobotIKSolver()
+        self._controller_not_loaded = False
 
     def kill_controller(self):
         self._robot_process.kill()
@@ -84,7 +85,16 @@ class FrankaRobot:
 
         def helper_non_blocking():
             if not self._robot.is_running_policy():
+                self._controller_not_loaded = True
                 self._robot.start_cartesian_impedance()
+                timeout = time.time() + 5
+                while not self._robot.is_running_policy():
+                    time.sleep(0.01)
+                    if time.time() > timeout:
+                        self._robot.start_cartesian_impedance()
+                        timeout = time.time() + 5
+
+                self._controller_not_loaded = False
             try:
                 self._robot.update_desired_joint_positions(command)
             except grpc.RpcError:
@@ -101,7 +111,8 @@ class FrankaRobot:
 
             self._robot.start_cartesian_impedance()
         else:
-            run_threaded_command(helper_non_blocking)
+            if not self._controller_not_loaded:
+                run_threaded_command(helper_non_blocking)
 
     def update_gripper(self, command, velocity=True, blocking=False):
         if velocity:

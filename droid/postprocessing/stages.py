@@ -26,8 +26,9 @@ from typing import Dict, Tuple
 import boto3
 from tqdm import tqdm
 
-from droid.postprocessing.parse import parse_datetime, parse_timestamp, parse_trajectory, parse_user
+from droid.postprocessing.parse import parse_datetime, parse_timestamp, parse_trajectory, parse_user, parse_existing_metadata, parse_data_directory
 from droid.postprocessing.util.svo2mp4 import convert_mp4s
+from droid.postprocessing.util.svo2depth import convert_depths
 from droid.postprocessing.util.validate import validate_day_dir, validate_metadata_record, validate_svo_existence
 
 
@@ -42,10 +43,16 @@ def run_indexing(
     scanned_paths: Dict[str, Dict[str, str]],
     indexed_uuids: Dict[str, Dict[str, str]],
     errored_paths: Dict[str, Dict[str, str]],
+    search_existing_metadata: bool = False,
+    lab_agnostic: bool = False,
+    process_failures: bool = True,
 ) -> None:
     """Index data by iterating through each "success/ | failure/" --> <DAY>/ --> <TIMESTAMP>/ (specified trajectory)."""
     progress = tqdm(desc="[*] Stage 1 =>> Indexing")
-    for outcome_dir, outcome in [(p, p.name) for p in [data_dir / "success", data_dir / "failure"]]:
+
+    paths_to_index = parse_data_directory(data_dir, lab_agnostic=lab_agnostic, process_failures=process_failures)
+
+    for outcome_dir, outcome in paths_to_index:
         if outcome == "failure" and not outcome_dir.exists():
             # Note: Some labs don't have failure trajectories...
             continue
@@ -59,8 +66,22 @@ def run_indexing(
                 rel_trajectory_dir = str(trajectory_dir.relative_to(data_dir))
 
                 # Extract Timestamp (from `trajectory_dir`) and User, User ID (from `trajectory.h5`)
-                timestamp = parse_timestamp(trajectory_dir)
-                user, user_id = parse_user(trajectory_dir, aliases, members)
+                existing_metadata_found = False
+                if search_existing_metadata:
+                    metadata = parse_existing_metadata(trajectory_dir)
+                    if metadata is not None:
+                        timestamp = metadata['timestamp']
+                        user = metadata['user']
+                        user_id = metadata['user_id']
+                        uuid = metadata['uuid']
+                        existing_metadata_found = True
+                if not (search_existing_metadata and existing_metadata_found):
+                    timestamp = parse_timestamp(trajectory_dir)
+                    user, user_id = parse_user(trajectory_dir, aliases, members)
+
+                    # Create Trajectory UUID --> <LAB>+<USER_ID>+YYYY-MM-DD-{24 Hour}h-{Min}m-{Sec}s
+                    uuid = f"{lab}+{user_id}+{timestamp}"
+
                 if user is None or user_id is None:
                     scanned_paths[outcome][rel_trajectory_dir] = True
                     errored_paths[outcome][rel_trajectory_dir] = (
@@ -71,9 +92,6 @@ def run_indexing(
                     totals["errored"][outcome] = len(errored_paths[outcome])
                     progress.update()
                     continue
-
-                # Create Trajectory UUID --> <LAB>+<USER_ID>+YYYY-MM-DD-{24 Hour}h-{Min}m-{Sec}s
-                uuid = f"{lab}+{user_id}+{timestamp}"
 
                 # Verify SVO Files
                 if not validate_svo_existence(trajectory_dir):
@@ -108,6 +126,11 @@ def run_processing(
     processed_uuids: Dict[str, Dict[str, str]],
     errored_paths: Dict[str, Dict[str, str]],
     process_batch_limit: int = 250,
+    search_existing_metadata: bool = False,
+    extract_MP4_data: bool = True,
+    extract_depth_data: bool = False,
+    depth_resolution: tuple = (0,0),
+    depth_frequency: int = 1,
 ) -> None:
     """Iterate through each trajectory in `indexed_uuids` and 1) extract JSON metadata and 2) convert SVO -> MP4."""
     for outcome in indexed_uuids:
@@ -117,36 +140,72 @@ def run_processing(
                 continue
 
             trajectory_dir = data_dir / rel_trajectory_dir
-            timestamp = parse_timestamp(trajectory_dir)
-            user, user_id = parse_user(trajectory_dir, aliases, members)
+            
+            existing_metadata_found = False
+            if search_existing_metadata:
+                metadata = parse_existing_metadata(trajectory_dir)
+                if metadata is not None:
+                    metadata_record = metadata
+                    timestamp = metadata['timestamp']
+                    user = metadata['user']
+                    user_id = metadata['user_id']
+                    uuid = metadata['uuid']
+                    existing_metadata_found = True
+                    valid_parse = True
+            if not (search_existing_metadata and existing_metadata_found):
+                timestamp = parse_timestamp(trajectory_dir)
+                user, user_id = parse_user(trajectory_dir, aliases, members)
 
-            # Run Metadata Extraction --> JSON-serializable Data Record + Validation
-            valid_parse, metadata_record = parse_trajectory(
-                data_dir, trajectory_dir, uuid, lab, user, user_id, timestamp
-            )
+                # Run Metadata Extraction --> JSON-serializable Data Record + Validation
+                valid_parse, metadata_record = parse_trajectory(
+                    data_dir, trajectory_dir, uuid, lab, user, user_id, timestamp
+                )
             if not valid_parse:
                 errored_paths[outcome][rel_trajectory_dir] = "[Processing Error] JSON Metadata Parse Error"
                 totals["errored"][outcome] = len(errored_paths[outcome])
                 continue
 
             # Convert SVOs --> MP4s
-            valid_convert, vid_paths = convert_mp4s(
-                data_dir,
-                trajectory_dir,
-                metadata_record["wrist_cam_serial"],
-                metadata_record["ext1_cam_serial"],
-                metadata_record["ext2_cam_serial"],
-                metadata_record["ext1_cam_extrinsics"],
-                metadata_record["ext2_cam_extrinsics"],
-            )
-            if not valid_convert:
-                errored_paths[outcome][rel_trajectory_dir] = "[Processing Error] Corrupted SVO / Failed Conversion"
-                totals["errored"][outcome] = len(errored_paths[outcome])
-                continue
+            if extract_MP4_data:
+                valid_convert, vid_paths = convert_mp4s(
+                    data_dir,
+                    trajectory_dir,
+                    metadata_record["wrist_cam_serial"],
+                    metadata_record["ext1_cam_serial"],
+                    metadata_record["ext2_cam_serial"],
+                    metadata_record["ext1_cam_extrinsics"],
+                    metadata_record["ext2_cam_extrinsics"],
+                )
+                if not valid_convert:
+                    errored_paths[outcome][rel_trajectory_dir] = "[Processing Error] Corrupted SVO / Failed Conversion"
+                    totals["errored"][outcome] = len(errored_paths[outcome])
+                    continue
 
-            # Finalize Metadata Record
-            for key, vid_path in vid_paths.items():
-                metadata_record[key] = vid_path
+                # Extend Metadata Record
+                for key, vid_path in vid_paths.items():
+                    metadata_record[key] = vid_path
+
+            # Convert SVOs --> Depth
+            if extract_depth_data:
+                valid_convert, vid_paths = convert_depths(
+                    data_dir,
+                    trajectory_dir,
+                    metadata_record["wrist_cam_serial"],
+                    metadata_record["ext1_cam_serial"],
+                    metadata_record["ext2_cam_serial"],
+                    metadata_record["ext1_cam_extrinsics"],
+                    metadata_record["ext2_cam_extrinsics"],
+                    resolution=depth_resolution,
+                    frequency=depth_frequency,
+                )
+                if not valid_convert:
+                    errored_paths[outcome][rel_trajectory_dir] = "[Processing Error] Corrupted SVO / Failed Conversion"
+                    totals["errored"][outcome] = len(errored_paths[outcome])
+                    continue
+
+                # Extend Metadata Record
+                for key, vid_path in vid_paths.items():
+                    metadata_record[key] = vid_path
 
             # Validate
             if not validate_metadata_record(metadata_record):
