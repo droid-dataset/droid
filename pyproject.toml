@@ -31,6 +31,7 @@ dependencies = [
     "pyrallis",
     "scipy",
     "tqdm",
+    "tyro",
     "websockets",
     "zerorpc",
 ]
