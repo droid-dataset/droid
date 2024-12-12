@@ -20,6 +20,7 @@ dependencies = [
     "h5py",
     "imageio",
     "matplotlib",
+    "msgpack",
     "mujoco==2.3.2",
     "open3d",
     "opencv-python==4.6.0.66",
@@ -30,6 +31,7 @@ dependencies = [
     "pyrallis",
     "scipy",
     "tqdm",
+    "websockets",
     "zerorpc",
 ]
 
