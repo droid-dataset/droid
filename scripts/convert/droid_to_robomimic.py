@@ -1,0 +1,92 @@
+import h5py
+import tyro
+import imageio
+import numpy as np
+from pathlib import Path
+import json
+
+def process_traj(traj_path, action_key):
+    '''
+    Takes a single h5 trajectory in droid format and parses it into a single demo entry for robomimic
+    '''
+    traj = h5py.File(traj_path, 'r')
+    observations = traj['observations']
+    actions = traj['action']
+    demo_data= {}
+
+    # traj len
+    traj_len = len(observations["robot_state"]["joint_positions"])
+
+    action_ds = actions[action_key][()]
+    observation_ds = {}
+
+    # capture states
+    valid_state_keys = ["joint_positions", "joint_velocities", "cartesian_position"]
+    for k,v in observations["robot_state"].items():
+        if k in valid_state_keys:
+            observation_ds[k] = v[()]
+
+    # get videos
+    for k,v in observations["videos"].items():
+        # observation_ds[k] = v[()]
+        serialized_video = v[()]
+        vid_reader = imageio.get_reader(serialized_video,  'mp4')
+        frames = []
+        for frame in vid_reader:
+            frames.append(frame)
+        observation_ds[k] = np.array(frames)
+    
+
+    demo_data = {
+        "num_samples": traj_len,
+        "states": np.array([]),
+        "actions": np.array(action_ds),
+        "rewards": np.zeros(traj_len),
+        "dones": np.zeros(traj_len),
+        "obs": observation_ds
+    }
+    return demo_data
+
+class Args:
+    droid_data_dir: str = "./"
+    action_key: str = "joint_position"
+
+if __name__ == "__main__":
+    args = tyro.cli(Args)
+
+    traj_folder = Path(args.droid_data_dir)
+    if not traj_folder.exists():
+        raise ValueError(f"Trajectory folder {traj_folder} does not exist")
+    traj_files = list(traj_folder.glob("*.h5"))
+
+    robomimic_dataset = h5py.File(f"robomimic_droid_dataset_{args.action_key}.h5", "w")
+    data_group = robomimic_dataset.create_group("data")
+
+    total_state_action_pairs = 0
+    for i, traj_file in enumerate(traj_files):
+        traj_data = process_traj(traj_file, action_key=args.action_key)
+
+        total_state_action_pairs += traj_data["num_samples"]
+
+        demo_group = data_group.create_group(f"demo_{i}")
+
+        demo_group.attrs["num_samples"] = traj_data["num_samples"]
+        demo_group.create_dataset("states", data=traj_data["states"])
+        demo_group.create_dataset("actions", data=traj_data["actions"])
+        demo_group.create_dataset("rewards", data=traj_data["rewards"])
+        demo_group.create_dataset("dones", data=traj_data["dones"])
+        obs_group = demo_group.create_group("obs")
+        for k,v in traj_data["obs"].items():
+            obs_group.create_dataset(k, data=v)
+
+    env_args = {
+        "env_name": "DROID",
+        "env_kwargs": {},
+        "type": 2
+    }
+    data_group.attrs["total"] = total_state_action_pairs
+    data_group.attrs["env_args"] = json.dumps(env_args)
+
+
+    # TODO: normalize actions, and store their statistics, or do this on fly in robomimic
+
