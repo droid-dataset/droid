@@ -4,8 +4,9 @@ import imageio
 import numpy as np
 from pathlib import Path
 import json
+from dataclasses import dataclass
 
-def process_traj(traj_path, action_key):
+def process_traj(traj_path):
     '''
     Takes a single h5 trajectory in droid format and parses it into a single demo entry for robomimic
     '''
@@ -17,15 +18,21 @@ def process_traj(traj_path, action_key):
     # traj len
     traj_len = len(observations["robot_state"]["joint_positions"])
 
-    action_ds = actions[action_key][()]
+    # action_ds = actions[action_key][()]
+    actions_ds = {}
     observation_ds = {}
 
+    ## Actions
+    for k,v in actions.items():
+        if not isinstance(v, h5py.Group):
+            actions_ds[k] = v[()]
+
+    ## Obs
     # capture states
     valid_state_keys = ["joint_positions", "joint_velocities", "cartesian_position"]
     for k,v in observations["robot_state"].items():
         if k in valid_state_keys:
             observation_ds[k] = v[()]
-
     # get videos
     for k,v in observations["videos"].items():
         # observation_ds[k] = v[()]
@@ -40,15 +47,16 @@ def process_traj(traj_path, action_key):
     demo_data = {
         "num_samples": traj_len,
         "states": np.array([]),
-        "actions": np.array(action_ds),
+        "actions": actions_ds,
         "rewards": np.zeros(traj_len),
         "dones": np.zeros(traj_len),
         "obs": observation_ds
     }
     return demo_data
 
+@dataclass
 class Args:
-    droid_data_dir: str = "./"
+    droid_data_dir: str = "./" # directory containing h5 files
     action_key: str = "joint_position"
 
 if __name__ == "__main__":
@@ -58,13 +66,17 @@ if __name__ == "__main__":
     if not traj_folder.exists():
         raise ValueError(f"Trajectory folder {traj_folder} does not exist")
     traj_files = list(traj_folder.glob("*.h5"))
+    if len(traj_files) == 0:
+        raise ValueError(f"No h5 files found in {traj_folder}")
 
-    robomimic_dataset = h5py.File(f"robomimic_droid_dataset_{args.action_key}.h5", "w")
+    robomimic_dataset = h5py.File(traj_folder / f"droid_dataset.robomimic_ds", "w")
     data_group = robomimic_dataset.create_group("data")
 
     total_state_action_pairs = 0
     for i, traj_file in enumerate(traj_files):
-        traj_data = process_traj(traj_file, action_key=args.action_key)
+        print(f"Processing {traj_file}")
+        # traj_data = process_traj(traj_file, action_key=args.action_key)
+        traj_data = process_traj(traj_file)
 
         total_state_action_pairs += traj_data["num_samples"]
 
@@ -72,12 +84,16 @@ if __name__ == "__main__":
 
         demo_group.attrs["num_samples"] = traj_data["num_samples"]
         demo_group.create_dataset("states", data=traj_data["states"])
-        demo_group.create_dataset("actions", data=traj_data["actions"])
         demo_group.create_dataset("rewards", data=traj_data["rewards"])
         demo_group.create_dataset("dones", data=traj_data["dones"])
         obs_group = demo_group.create_group("obs")
         for k,v in traj_data["obs"].items():
             obs_group.create_dataset(k, data=v)
+
+        # demo_group.create_dataset("actions", data=traj_data["actions"])
+        action_group = demo_group.create_group("actions")
+        for k,v in traj_data["actions"].items():
+            action_group.create_dataset(k, data=v)
 
     env_args = {
         "env_name": "DROID",
@@ -88,5 +104,4 @@ if __name__ == "__main__":
     data_group.attrs["env_args"] = json.dumps(env_args)
 
 
-    # TODO: normalize actions, and store their statistics, or do this on fly in robomimic
-
+    robomimic_dataset.close()
