@@ -1,5 +1,10 @@
 # The DROID Robot Platform
 
+## !! Modifications !!
+- droid to robomimic format conversion script
+
+
+
 This repository contains the code for setting up your DROID robot platform and using it to collect teleoperated demonstration data. This platform was used to collect the [DROID dataset](https://droid-dataset.github.io), a large, in-the-wild dataset of robot manipulations.
 
 If you are interested in using the DROID dataset for training robot policies, please check out our [policy learning repo](https://github.com/droid-dataset/droid_policy_learning).
