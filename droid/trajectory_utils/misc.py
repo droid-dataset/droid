@@ -1,6 +1,8 @@
 import time
 from collections import defaultdict
 from copy import deepcopy
+import tempfile
+
 
 import cv2
 import numpy as np
@@ -311,23 +313,20 @@ def replay_trajectory(
     traj_reader = TrajectoryReader(filepath, read_images=False)
     horizon = traj_reader.length()
 
+    # Write temp trajectory
+    temp_file_path = tempfile.NamedTemporaryFile(delete=False).name
+    traj_writer = TrajectoryWriter(temp_file_path, save_images=False, exists_ok=True)
+
     for i in range(horizon):
         # Get HDF5 Data #
         timestep = traj_reader.read_timestep()
 
         # Move To Initial Position #
         if i == 0:
-            init_joint_position = timestep["observation"]["robot_state"]["joint_positions"]
-            init_gripper_position = timestep["observation"]["robot_state"]["gripper_position"]
+            init_joint_position = timestep["observations"]["robot_state"]["joint_positions"]
+            init_gripper_position = timestep["observations"]["robot_state"]["gripper_position"]
             action = np.concatenate([init_joint_position, [init_gripper_position]])
             env.update_robot(action, action_space="joint_position", blocking=True)
-
-        # TODO: Assert Replayability #
-        # robot_state = env.get_state()[0]
-        # for key in assert_replayable_keys:
-        # 	desired = timestep['observation']['robot_state'][key]
-        # 	current = robot_state[key]
-        # 	assert np.allclose(desired, current)
 
         # Regularize Control Frequency #
         time.sleep(1 / env.control_hz)
@@ -336,12 +335,25 @@ def replay_trajectory(
         arm_action = timestep["action"][env.action_space]
         gripper_action = timestep["action"][gripper_key]
         action = np.concatenate([arm_action, [gripper_action]])
-        controller_info = timestep["observation"]["controller_info"]
+        controller_info = timestep["observations"]["controller_info"]
         movement_enabled = controller_info.get("movement_enabled", True)
+
+        obs = env.get_observation()
+        timestep = {
+            "observations": obs,
+            "action": action,
+        }
+        traj_writer.write_timestep(timestep)
 
         # Follow Trajectory #
         if movement_enabled:
             env.step(action)
+
+    traj_reader.close()
+    traj_writer.close()
+
+    return temp_file_path
+
 
 
 def load_trajectory(

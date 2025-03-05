@@ -62,7 +62,7 @@ class TrajectoryReader:
         self._hdf5_file = h5py.File(filepath, "r")
         is_video_folder = "observations/videos" in self._hdf5_file
         self._read_images = read_images and is_video_folder
-        self._length = get_hdf5_length(self._hdf5_file)
+        self._length = get_hdf5_length(self._hdf5_file, keys_to_ignore=["controller_info"])
         self._video_readers = {}
         self._index = 0
 

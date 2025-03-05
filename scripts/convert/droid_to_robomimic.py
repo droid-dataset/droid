@@ -5,8 +5,10 @@ import numpy as np
 from pathlib import Path
 import json
 from dataclasses import dataclass
+from typing import Tuple
+import cv2
 
-def process_traj(traj_path):
+def process_traj(traj_path, image_res):
     '''
     Takes a single h5 trajectory in droid format and parses it into a single demo entry for robomimic
     '''
@@ -29,10 +31,10 @@ def process_traj(traj_path):
 
     ## Obs
     # capture states
-    valid_state_keys = ["joint_positions", "joint_velocities", "cartesian_position"]
+    valid_state_keys = ["joint_positions", "joint_velocities", "cartesian_position", "gripper_position"]
     for k,v in observations["robot_state"].items():
         if k in valid_state_keys:
-            observation_ds[k] = v[()]
+            observation_ds[k] = v[()].reshape(traj_len, -1)
     # get videos
     for k,v in observations["videos"].items():
         # observation_ds[k] = v[()]
@@ -40,9 +42,9 @@ def process_traj(traj_path):
         vid_reader = imageio.get_reader(serialized_video,  'mp4')
         frames = []
         for frame in vid_reader:
+            frame = cv2.resize(frame, image_res)
             frames.append(frame)
         observation_ds[k] = np.array(frames)
-    
 
     demo_data = {
         "num_samples": traj_len,
@@ -56,8 +58,9 @@ def process_traj(traj_path):
 
 @dataclass
 class Args:
-    droid_data_dir: str = "./" # directory containing h5 files
+    droid_data_dir: str = "/home/r2d2/projects/real2simeval/droid_arhan/scripts/data/training1-2025-03-03-22-00-23" # directory containing h5 files
     action_key: str = "joint_position"
+    image_res: Tuple[int, int] = (224,224)
 
 if __name__ == "__main__":
     args = tyro.cli(Args)
@@ -76,7 +79,7 @@ if __name__ == "__main__":
     for i, traj_file in enumerate(traj_files):
         print(f"Processing {traj_file}")
         # traj_data = process_traj(traj_file, action_key=args.action_key)
-        traj_data = process_traj(traj_file)
+        traj_data = process_traj(traj_file, image_res=args.image_res)
 
         total_state_action_pairs += traj_data["num_samples"]
 

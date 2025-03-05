@@ -31,13 +31,13 @@ resize_func_map = {"cv2": cv2.resize, None: None}
 
 standard_params = {}
 advanced_params = {}
-# standard_params = dict(
-#     depth_minimum_distance=0.1, camera_resolution=sl.RESOLUTION.HD720, depth_stabilization=False, camera_fps=60, camera_image_flip=sl.FLIP_MODE.OFF
-# )
+standard_params = dict(
+    depth_minimum_distance=0.1, camera_resolution=sl.RESOLUTION.HD720, depth_stabilization=False, camera_fps=60, camera_image_flip=sl.FLIP_MODE.OFF
+)
 
-# advanced_params = dict(
-#     depth_minimum_distance=0.1, camera_resolution=sl.RESOLUTION.HD2K, depth_stabilization=False, camera_fps=15, camera_image_flip=sl.FLIP_MODE.OFF
-# )
+advanced_params = dict(
+    depth_minimum_distance=0.1, camera_resolution=sl.RESOLUTION.HD2K, depth_stabilization=False, camera_fps=15, camera_image_flip=sl.FLIP_MODE.OFF
+)
 
 
 class ZedCamera:
