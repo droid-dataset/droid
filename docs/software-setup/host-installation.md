@@ -163,7 +163,7 @@ Update the IP parameters in `droid/misc/parameters.py`, in particular set `robot
 
 If you choose to install miniconda instead of anaconda in previous steps of this guide you will need to make the following edits:
 
-In droid/franka change the word anaconda to minicode in the scripts `launch_gripper.sh` and `launch_robot.sh`. Also change the paths to be absolute. Repeat for the `launch_server.sh` file in `scripts/server`
+In droid/franka change the word `anaconda` to `miniconda` in the scripts `launch_gripper.sh` and `launch_robot.sh`. Also change the paths to be absolute. Repeat for the `launch_server.sh` file in `scripts/server`
 
 ## Optional: Configure Headless Server
 
@@ -228,9 +228,9 @@ gcc --version
 
 Next we will install the ZED SDK and python API which is required to interface with ZED cameras. Follow the official guide outlined [here](https://www.stereolabs.com/docs/installation/linux), while adhering to the below instructions during your installation:
 
-* Ensure you have the robot conda environment activated
-* Enter yes when prompted to install CUDA
-* Enter yes to everything else during the installation procedure with the exception of optimizing ZED models this is optiona
+* Ensure you have the `robot` conda environment activated
+* Enter `yes` when prompted to install CUDA
+* Enter `yes` to everything else during the installation procedure with the exception of optimizing ZED models this is optional
 
 Once you have restarted your machine post installation, activate the robot conda environment and test that you can import pyzed through running:
 
@@ -268,7 +268,7 @@ Update the IP parameters in `droid/misc/parameters.py`, in particular set `robot
 
 If you choose to install miniconda instead of anaconda in previous steps of this guide you will need to make the following edits:
 
-In droid/franka change the word anaconda to minicode in the scripts `launch_gripper.sh` and `launch_robot.sh`. Also change the paths to be absolute. Repeat for the `launch_server.sh` file in `scripts/server`
+In droid/franka change the word `anaconda` to `miniconda` in the scripts `launch_gripper.sh` and `launch_robot.sh`. Also change the paths to be absolute. Repeat for the `launch_server.sh` file in `scripts/server`
 
 
 # Testing/Validating Entire Setup
