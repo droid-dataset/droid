@@ -38,7 +38,7 @@ if [ "$first_time" = "yes" ]; then
 	curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
 	apt update && apt install -y git-lfs
 	git lfs install # has to be run only once on a single user account
-	cd $ROOT_DIR && git submodule update --recursive --remote --init
+	cd $ROOT_DIR && git rm ./src/droid/fairo && git submodule update --recursive --init
 	
 	# install docker
 	echo -e "Install docker \n"

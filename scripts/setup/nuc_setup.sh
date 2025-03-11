@@ -18,7 +18,7 @@ if [ "$first_time" = "yes" ]; then
         eval "$(ssh-agent -s)"
         ssh-add /home/$USERNAME/.ssh/id_ed25519
         ROOT_DIR="$(git rev-parse --show-toplevel)"
-        cd $ROOT_DIR && git submodule update --recursive --remote --init
+        cd $ROOT_DIR && git rm ./src/droid/oculus_reader && git submodule update --recursive --init
 
         # install docker
         echo -e "\nInstall docker \n"
