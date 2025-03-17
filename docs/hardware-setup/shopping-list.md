@@ -13,7 +13,7 @@ nav_order: 1
 
 | Component | Quantity | Approximate Component Cost | Suppliers |
 | --------- | -------- | -------------------------- | --------- |
-| Franka Emika Panda (or) Franka Research 3 | 1 | $10,500 | [Franka Robotics](https://lp.franka.de/request-a-quote) |
+| Franka Emika Panda (or) Franka Research 3 | 1 | ~$28,820.23 | [Franka Robotics](https://lp.franka.de/request-a-quote) |
 
 ## Gripper:
 
