@@ -27,7 +27,11 @@ def process_traj(traj_path, image_res):
     ## Actions
     for k,v in actions.items():
         if not isinstance(v, h5py.Group):
-            actions_ds[k] = v[()]
+            try:
+                actions_ds[k] = v[()].reshape(traj_len, -1)
+            except:
+                print(f"Could not reshape {k} with shape {v.shape} to {(traj_len, -1)}")
+
 
     ## Obs
     # capture states
