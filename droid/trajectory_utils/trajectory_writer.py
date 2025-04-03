@@ -84,15 +84,16 @@ class TrajectoryWriter:
             queue.task_done()
 
     def _update_video_files(self, timestep):
-        image_dict = timestep["observations"]["image"]
+        image_dict = timestep["observation"]["image"]
 
         for video_id in image_dict:
             # Get Frame #
             img = image_dict[video_id]
-            del image_dict[video_id]
+            # del image_dict[video_id]
 
             # Create Writer And Buffer #
-            if video_id not in self._video_buffers:
+            # if video_id not in self._video_buffers:
+            if video_id not in self._video_writers:
                 filename = self.create_video_file(video_id, ".mp4")
                 self._video_writers[video_id] = imageio.get_writer(filename, macro_block_size=1)
                 run_threaded_command(
@@ -101,8 +102,10 @@ class TrajectoryWriter:
 
             # Add Image To Queue #
             self._queue_dict[video_id].put(img)
+        for video_id in list(image_dict.keys()):
+            del image_dict[video_id]
 
-        del timestep["observations"]["image"]
+        del timestep["observation"]["image"]
 
     def create_video_file(self, video_id, suffix):
         temp_file = tempfile.NamedTemporaryFile(suffix=suffix)

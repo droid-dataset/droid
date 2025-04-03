@@ -66,19 +66,19 @@ def collect_trajectory(
     if reset_robot:
         env.reset(randomize=randomize_reset)
 
-    print("Moving to controller position")
-    for _ in range(150):
-        obs = env.get_observation()
-        action, _ = controller.forward(obs, include_info=True)
-        joint_pos = obs["robot_state"]["joint_positions"]
+    # print("Moving to controller position")
+    # for _ in range(150):
+    #     obs = env.get_observation()
+    #     action, _ = controller.forward(obs, include_info=True)
+    #     joint_pos = obs["robot_state"]["joint_positions"]
 
-        # clip the diff
-        diff = action[:-1] - joint_pos
-        diff = np.clip(diff, -0.1, 0.1)
-        clipped_action = joint_pos + diff
-        clipped_action = np.concatenate([clipped_action, [0]])
+    #     # clip the diff
+    #     diff = action[:-1] - joint_pos
+    #     diff = np.clip(diff, -0.1, 0.1)
+    #     clipped_action = joint_pos + diff
+    #     clipped_action = np.concatenate([clipped_action, [0]])
 
-        env.step(clipped_action)
+    #     env.step(clipped_action)
 
 
     # Begin! #
