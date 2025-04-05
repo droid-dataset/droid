@@ -78,7 +78,10 @@ def main(args: Args):
     console.print(f"[bold green]DROID Environment Ready![/bold green] with action space: [bold purple] {action_space, gripper_action_space} [/bold purple]")
 
     # rolling out
-    (Path(__file__).parent / "diffusion_replay.h5").unlink()
+    traj_path = Path(__file__).parent / "diffusion_replay.h5"
+    if traj_path.exists():
+        traj_path.unlink()
+
     collect_trajectory(
         env,
         policy=policy,

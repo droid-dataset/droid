@@ -6,7 +6,7 @@ import imageio
 
 def create_video_file(suffix=".mp4", byte_contents=None):
     # Create Temporary File #
-    temp_file = tempfile.NamedTemporaryFile(suffix=suffix)
+    temp_file = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
     filename = temp_file.name
 
     # If Byte Contents Provided, Write To File #
@@ -28,7 +28,10 @@ def get_hdf5_length(hdf5_file, keys_to_ignore=[]):
         if isinstance(curr_data, h5py.Group):
             curr_length = get_hdf5_length(curr_data, keys_to_ignore=keys_to_ignore)
         elif isinstance(curr_data, h5py.Dataset):
-            curr_length = len(curr_data)
+            try:
+                curr_length = len(curr_data)
+            except:
+                print(key)
         else:
             raise ValueError
 
@@ -60,9 +63,9 @@ def load_hdf5_to_dict(hdf5_file, index, keys_to_ignore=[]):
 class TrajectoryReader:
     def __init__(self, filepath, read_images=True):
         self._hdf5_file = h5py.File(filepath, "r")
-        is_video_folder = "observations/videos" in self._hdf5_file
+        is_video_folder = "observation/videos" in self._hdf5_file
         self._read_images = read_images and is_video_folder
-        self._length = get_hdf5_length(self._hdf5_file, keys_to_ignore=["controller_info"])
+        self._length = get_hdf5_length(self._hdf5_file, keys_to_ignore=["controller_info", "videos"])
         self._video_readers = {}
         self._index = 0
 
@@ -85,7 +88,7 @@ class TrajectoryReader:
         # Load High Dimensional Data #
         if self._read_images:
             camera_obs = self._uncompress_images()
-            timestep["observations"]["image"] = camera_obs
+            timestep["observation"]["image"] = camera_obs
 
         # Increment Read Index #
         self._index += 1
@@ -95,15 +98,16 @@ class TrajectoryReader:
 
     def _uncompress_images(self):
         # WARNING: THIS FUNCTION HAS NOT BEEN TESTED. UNDEFINED BEHAVIOR FOR FAILED READING. #
-        video_folder = self._hdf5_file["observations/videos"]
+        video_folder = self._hdf5_file["observation/videos"]
         camera_obs = {}
 
         for video_id in video_folder:
             # Create Video Reader If One Hasn't Been Made #
             if video_id not in self._video_readers:
-                serialized_video = video_folder[video_id]
+                serialized_video = video_folder[video_id][()]
                 filename = create_video_file(byte_contents=serialized_video)
                 self._video_readers[video_id] = imageio.get_reader(filename)
+                # self._video_readers[video_id]._depth = 4
 
             # Read Next Frame #
             camera_obs[video_id] = yield self._video_readers[video_id]

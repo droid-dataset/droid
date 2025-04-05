@@ -17,6 +17,7 @@ class RobotDataCollector:
         self.task = task
         self.total_trajectories = 0
         self.is_collecting = False
+        
 
     def add_successful_trajectory(self):
         self.total_trajectories += 1
@@ -41,16 +42,38 @@ def wait_until_ready(controller, console):
     '''
     If user is ready, returns true, but false if user wants to stop the data collection
     '''
+    # controller.reset_state()
+    # last_state = False
+    # while True:
+    #     controller_info = controller.get_info()
+    #     if not (controller_info["success"] == last_state):
+    #         last_state = controller_info["success"]
+    #         time.sleep(0.2)
+    #     if not (controller_info["success"]):
+    #         return True
+    #     elif controller_info["failure"]:
+    #         console.print("Data collection stopped.")
+    #         return False
+    #     else:
+    #         time.sleep(0.1)
+    #     time.sl
+
     controller.reset_state()
+    last_state = None
     while True:
         controller_info = controller.get_info()
+        if not last_state is None:
+            if last_state =="success" and not controller_info["success"]:
+                return True
+            elif last_state == "failure" and not controller_info["failure"]:
+                return False
+
         if controller_info["success"]:
-            return True
+            last_state = "success"
         elif controller_info["failure"]:
-            console.print("Data collection stopped.")
-            return False
+            last_state = "failure"
         else:
-            time.sleep(0.1)
+            last_state = None
 
 # Initialize data collector
 console = Console()
@@ -65,14 +88,14 @@ collector = RobotDataCollector(task=task)
 
 env = RobotEnv(action_space="cartesian_velocity", gripper_action_space="position")
 controller = VRPolicy(
-        pos_action_gain = 8,
-        rot_action_gain= 4,
+        pos_action_gain = 10,
+        rot_action_gain= 6,
 )
 
 
 # Simulate data collection in real-time
 with Live(collector.generate_table(), refresh_per_second=5) as live:
-
+# while True:
     # get all trajs
     trajs = list(data_folder.glob("*.h5"))
     traj_idx = len(trajs) + 1   
@@ -81,8 +104,10 @@ with Live(collector.generate_table(), refresh_per_second=5) as live:
         proceed = wait_until_ready(controller, console)
         if not proceed:
             break
+
         collector.start_collecting()
         live.update(collector.generate_table())
+        controller.reset_state()
 
         controller_info = collect_trajectory(env, 
                                             controller=controller,
@@ -101,3 +126,8 @@ with Live(collector.generate_table(), refresh_per_second=5) as live:
                         
         live.update(collector.generate_table())  # Update the UI
         env.reset()
+
+
+    
+
+

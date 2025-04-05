@@ -11,7 +11,7 @@ import numpy as np
 from droid.misc.subprocess_utils import run_threaded_command
 
 
-def write_dict_to_hdf5(hdf5_file, data_dict, keys_to_ignore=["image", "depth", "pointcloud"]):
+def write_dict_to_hdf5(hdf5_file, data_dict, keys_to_ignore=["image", "pointcloud"]):
     for key in data_dict.keys():
         # Pass Over Specified Keys #
         if key in keys_to_ignore:
@@ -45,10 +45,11 @@ def write_dict_to_hdf5(hdf5_file, data_dict, keys_to_ignore=["image", "depth", "
 
 
 class TrajectoryWriter:
-    def __init__(self, filepath, metadata=None, exists_ok=False, save_images=True):
+    def __init__(self, filepath, metadata=None, exists_ok=False, save_images=True, save_depth = True): #Change
         assert (not os.path.isfile(filepath)) or exists_ok
         self._filepath = filepath
         self._save_images = save_images
+        self._save_depth = save_depth #Change
         self._hdf5_file = h5py.File(filepath, "w")
         self._queue_dict = defaultdict(Queue)
         self._video_writers = {}
@@ -66,7 +67,7 @@ class TrajectoryWriter:
         run_threaded_command(self._write_from_queue, args=(hdf5_writer, self._queue_dict["hdf5"]))
 
     def write_timestep(self, timestep):
-        if self._save_images:
+        if self._save_images: #Change
             self._update_video_files(timestep)
         self._queue_dict["hdf5"].put(timestep)
 
@@ -85,11 +86,12 @@ class TrajectoryWriter:
 
     def _update_video_files(self, timestep):
         image_dict = timestep["observation"]["image"]
+        # depth_dict = timestep["observation"]["depth"] #Change 
+
 
         for video_id in image_dict:
             # Get Frame #
             img = image_dict[video_id]
-            # del image_dict[video_id]
 
             # Create Writer And Buffer #
             # if video_id not in self._video_buffers:
@@ -105,7 +107,29 @@ class TrajectoryWriter:
         for video_id in list(image_dict.keys()):
             del image_dict[video_id]
 
+
         del timestep["observation"]["image"]
+
+        # """ CHANGE FOR TRAJ START"""
+        # for video_id in depth_dict:
+        #     depth = depth_dict[video_id]
+        #     depth_key = f"depth_{video_id}"
+
+        #     if depth_key not in self._video_writers:
+
+        #         filename = self.create_video_file(depth_key, ".mp4")
+        #         self._video_writers[depth_key] = imageio.get_writer(filename, macro_block_size=1)
+        #         run_threaded_command(
+        #             self._write_from_queue, args=(self._video_writers[depth_key].append_data, self._queue_dict[depth_key])
+        #         )
+
+        #     self._queue_dict[depth_key].put(depth)
+
+        # for video_id in list(depth_dict.keys()):
+        #     del depth_dict[video_id]
+            
+        # del timestep["observation"]["depth"]
+        """ CHANGE FOR TRAJ END"""
 
     def create_video_file(self, video_id, suffix):
         temp_file = tempfile.NamedTemporaryFile(suffix=suffix)
@@ -127,15 +151,15 @@ class TrajectoryWriter:
         # Save Serialized Videos #
         for video_id in self._video_files:
             # Create Folder #
-            if "videos" not in self._hdf5_file["observations"]:
-                self._hdf5_file["observations"].create_group("videos")
+            if "videos" not in self._hdf5_file["observation"]:
+                self._hdf5_file["observation"].create_group("videos")
 
             # Get Serialized Video #
             self._video_files[video_id].seek(0)
             serialized_video = np.asarray(self._video_files[video_id].read())
 
             # Save Data #
-            self._hdf5_file["observations"]["videos"].create_dataset(video_id, data=serialized_video)
+            self._hdf5_file["observation"]["videos"].create_dataset(video_id, data=serialized_video)
             self._video_files[video_id].close()
 
         # Close File #

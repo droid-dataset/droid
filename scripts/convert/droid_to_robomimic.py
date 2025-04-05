@@ -13,7 +13,7 @@ def process_traj(traj_path, image_res):
     Takes a single h5 trajectory in droid format and parses it into a single demo entry for robomimic
     '''
     traj = h5py.File(traj_path, 'r')
-    observations = traj['observations']
+    observations = traj['observation']
     actions = traj['action']
     demo_data= {}
 

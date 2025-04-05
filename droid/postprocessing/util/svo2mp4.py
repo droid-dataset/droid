@@ -18,10 +18,10 @@ def export_mp4(svo_file: Path, mp4_dir: Path, stereo_view: str = "left", show_pr
     """Reads an SVO file, dumping the export MP4 to the desired path; supports ZED SDK 3.8.* and 4.0.* ONLY."""
     mp4_out = mp4_dir / f"{svo_file.stem}.mp4"
     sdk_version, use_sdk_4 = sl.Camera().get_sdk_version(), None
-    if not (sdk_version.startswith("4.0") or sdk_version.startswith("3.8")):
+    if not (sdk_version.startswith("4") or sdk_version.startswith("3.8")):
         raise ValueError("Function `export_mp4` only supports ZED SDK 3.8 OR 4.0; if you see this, contact Sidd!")
     else:
-        use_sdk_4 = sdk_version.startswith("4.0")
+        use_sdk_4 = sdk_version.startswith("4")
 
     # Configure PyZED --> set mostly from SVO Path, don't convert in realtime!
     initial_parameters = sl.InitParameters()
