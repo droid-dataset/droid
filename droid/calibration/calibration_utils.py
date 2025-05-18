@@ -158,9 +158,11 @@ class CharucoDetector:
     def add_sample(self, cam_id, image, pose):
         readings = self.process_image(image)
         if readings is None:
-            return
+            return False
         self._readings_dict[cam_id].append(readings)
         self._pose_dict[cam_id].append(pose)
+
+        return True
 
     def calculate_target_to_cam(self, readings, train=True):
         init_corners_all = []  # Corners discovered in all images processed
