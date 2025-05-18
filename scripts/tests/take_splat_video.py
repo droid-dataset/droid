@@ -2,6 +2,7 @@ import time
 from collections import defaultdict
 from copy import deepcopy
 import tempfile
+from tqdm import tqdm
 
 
 import cv2
@@ -17,7 +18,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Args:
-    file: str
+    file: str = ''
     camera_id: str = "23404442"
 
 if __name__ == "__main__":
@@ -39,16 +40,16 @@ if __name__ == "__main__":
     calibrator._curr_cam_id = camera_id + "_left"
 
 
+    add_sample_successes = []
     if file:
-        frames = np.load(file, allow_pickle=True)
-        for frame in frames:
-            calibrator.add_sample(camera_id + "_left", frame, pose=None)
+        frames = np.load(file, allow_pickle=True).item()
+        frames = frames["image"]
 
-        data = {
-            "image": frames,
-            "intrinsics": intrinsics,
-        }
-        np.save("charuco_frames.npy", data)
+        for i, frame in tqdm(enumerate(frames)):
+            ret = calibrator.add_sample(camera_id + "_left", frame, pose=None)
+            if ret:
+                add_sample_successes.append(i)
+
     else:
         # Sample at 5 Hz
         sample_rate = 0.2
@@ -75,8 +76,10 @@ if __name__ == "__main__":
             key = cv2.waitKey(1)
 
             if time.time() - prev_frame_time > sample_rate:
-                frames.append(left_img)
-                calibrator.add_sample(camera_id + "_left", left_img_og, pose=None)
+                frames.append(left_img_og)
+                ret = calibrator.add_sample(camera_id + "_left", left_img_og, pose=None)
+                if ret:
+                    add_sample_successes.append(len(frames)-1)
                 prev_frame_time = time.time()
 
             if key == ord("q"):
@@ -84,17 +87,22 @@ if __name__ == "__main__":
         camera.disable_camera()
         cv2.destroyAllWindows()
 
-        # Save frames to numpy
-
-        frames_np = np.array(
-            {
-                "image": frames,
-                "intrinsics": intrinsics,
-            }
-            )
-        np.save("charuco_frames.npy", frames_np)
-
+    print("calcing")
     rmats, tvecs, successes = calibrator.calculate_target_to_cam(calibrator._readings_dict[camera_id + "_left"])
     rmats, tvecs, successes = np.array(rmats), np.array(tvecs), np.array(successes)
     print(f"Detected {len(successes)} / {len(frames)} charuco boards")
+
+    np_data = {
+        "image": frames,
+        "intrinsics": intrinsics,
+        "successes": add_sample_successes,
+        "transforms": {
+            "rmats": rmats,
+            "rvecs": tvecs
+        }
+    }
+    print(np_data["successes"])
+
+    np.save("droid_robot.npy", np_data)
+
 
