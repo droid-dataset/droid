@@ -29,6 +29,9 @@ gsutil -m cp -r gs://gresearch/robotics/droid_100 <path_to_your_target_dir>
 
 # Raw DROID dataset in stereo HD, stored as MP4 videos (8.7TB)
 gsutil -m cp -r gs://gresearch/robotics/droid_raw <path_to_your_target_dir>
+
+# Raw DROID dataset, non-stereo HD video only (5.6TB, excluding stereo video & raw SVO cam files)
+gsutil -m rsync -r -x ".*SVO.*|.*stereo.*\.mp4$" "gs://gresearch/robotics/droid_raw" <path_to_your_target_dir>
 ```
 
 ### Accessing RLDS Dataset
