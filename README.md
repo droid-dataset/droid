@@ -54,6 +54,99 @@ Running DROID software directly on the host machine requires more installation s
 
 If you encounter issues during setup, please raise them as issues in this github repo.
 
+## Recording Trajectory Data
+
+Once your DROID robot platform is set up, you can start collecting teleoperated demonstration data. The system uses VR controllers (Meta Quest/Oculus) to control the robot and manage recording.
+
+### Starting the System
+
+1. **Using Docker (recommended):**
+
+   ```bash
+   cd .docker
+   docker-compose up -d
+   docker exec -it droid_container bash
+   python scripts/main.py
+   ```
+
+2. **Direct host execution:**
+
+   ```bash
+   python scripts/main.py
+   ```
+
+3. **For left controller users:**
+   ```bash
+   python scripts/main.py --left_controller
+   ```
+
+### VR Controller Recording Controls
+
+The trajectory recording is controlled through VR controller buttons:
+
+#### **Right Controller (default):**
+
+- **Button A**: Mark trajectory as **success** and stop recording
+- **Button B**: Mark trajectory as **failure** and stop recording
+- **Right Grip (RG)**: Hold to enable robot movement during recording
+- **Right Joystick (RJ)**: Reset controller orientation
+
+#### **Left Controller:**
+
+- **Button X**: Mark trajectory as **success** and stop recording
+- **Button Y**: Mark trajectory as **failure** and stop recording
+- **Left Grip (LG)**: Hold to enable robot movement during recording
+- **Left Joystick (LJ)**: Reset controller orientation
+
+### Recording Workflow
+
+1. **Start Recording**: Launch the GUI application, which automatically begins recording when you start a trajectory collection session
+
+2. **Control the Robot**:
+
+   - Hold the **grip button** (RG for right controller, LG for left controller) to enable robot movement
+   - Move the VR controller to teleoperate the robot arm
+   - Release grip to pause movement while keeping recording active
+
+3. **Stop Recording**:
+   - **Success**: Press **A** (right controller) or **X** (left controller) to save as successful demonstration
+   - **Failure**: Press **B** (right controller) or **Y** (left controller) to save as failed attempt
+   - **Emergency Stop**: Press **Ctrl+C** to interrupt (marks as failure)
+
+### Data Output
+
+All recordings are automatically saved to `~/recordings/` with this structure:
+
+```
+~/recordings/
+├── success/YYYY-MM-DD/        # Successful demonstrations by date
+├── failure/YYYY-MM-DD/        # Failed attempts by date
+└── evaluation_logs/           # Policy evaluation logs
+```
+
+Each trajectory creates a timestamped folder containing:
+
+- `trajectory.mcap` - Main trajectory data (robot states, actions, VR controller data)
+- `recordings/SVO/` - Camera recordings from all 3 ZED cameras
+
+### Programmatic Interface
+
+You can also control recording programmatically:
+
+```python
+from droid.controllers.oculus_controller import VRPolicy
+from droid.robot_env import RobotEnv
+from droid.trajectory_utils.misc import collect_trajectory
+
+# Initialize environment and controller
+env = RobotEnv()
+controller = VRPolicy()
+
+# Collect trajectory (blocks until success/failure button press)
+controller_info = collect_trajectory(env, controller=controller)
+print(f"Recording completed. Success: {controller_info['success']}")
+```
+
 ## Data Storage Format
 
 The Droid Franka Robots framework supports two data storage formats:
