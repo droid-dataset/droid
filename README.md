@@ -204,73 +204,109 @@ The MCAP implementation captures comprehensive sensor data from all modalities u
 
 **Robot State** (`droid.RobotState`)
 
+Contains complete robot state information including joint and cartesian data.
+
 ```json
 {
-  "timestamp": {"sec": int, "nsec": int},
-  "joint_positions": [float],     // 7 elements
-  "joint_velocities": [float],    // 7 elements
-  "joint_efforts": [float],       // 7 elements
-  "cartesian_position": [float],  // 6 elements (x,y,z,rx,ry,rz)
-  "cartesian_velocity": [float],  // 6 elements
-  "gripper_position": float,
-  "gripper_velocity": float
+  "timestamp": { "sec": "int", "nsec": "int" },
+  "joint_positions": ["float"],
+  "joint_velocities": ["float"],
+  "joint_efforts": ["float"],
+  "cartesian_position": ["float"],
+  "cartesian_velocity": ["float"],
+  "gripper_position": "float",
+  "gripper_velocity": "float"
 }
 ```
 
+- `joint_positions`, `joint_velocities`, `joint_efforts`: Arrays of 7 elements for 7-DOF robot arm
+- `cartesian_position`, `cartesian_velocity`: Arrays of 6 elements (x,y,z,rx,ry,rz)
+- `gripper_position`, `gripper_velocity`: Single float values for gripper state
+
 **Camera Images** (`foxglove.CompressedImage`)
+
+Compressed JPEG images from ZED cameras with metadata.
 
 ```json
 {
-  "timestamp": {"sec": int, "nsec": int},
-  "frame_id": string,           // Camera identifier (e.g. "12345_left")
-  "data": string,               // Base64 encoded JPEG data
+  "timestamp": { "sec": "int", "nsec": "int" },
+  "frame_id": "string",
+  "data": "string",
   "format": "jpeg"
 }
 ```
 
+- `frame_id`: Camera identifier (e.g. "12345_left", "12345_right")
+- `data`: Base64 encoded JPEG image data
+- `format`: Always "jpeg" for compressed images
+
 **Actions** (`droid.Action`)
+
+Control actions sent to the robot arm.
 
 ```json
 {
-  "timestamp": {"sec": int, "nsec": int},
-  "data": [float]               // 7-DOF action vector
+  "timestamp": { "sec": "int", "nsec": "int" },
+  "data": ["float"]
 }
 ```
+
+- `data`: Array of 7 float values representing 7-DOF robot action vector
 
 **Audio** (`foxglove.RawAudio`)
 
+Raw audio data from the microphone.
+
 ```json
 {
-  "timestamp": {"sec": int, "nsec": int},
+  "timestamp": { "sec": "int", "nsec": "int" },
   "frame_id": "microphone",
-  "encoding": "pcm_16le",       // PCM 16-bit little endian
+  "encoding": "pcm_16le",
   "sample_rate": 44100,
-  "data": string                // Base64 encoded audio data
+  "data": "string"
 }
 ```
+
+- `encoding`: PCM 16-bit little endian format
+- `sample_rate`: Audio sample rate (typically 44100 Hz)
+- `data`: Base64 encoded raw audio data
 
 **VR Controller** (`droid.VRController`)
 
+Complete VR controller state including poses, buttons, and control flags.
+
 ```json
 {
-  "timestamp": {"sec": int, "nsec": int},
+  "timestamp": { "sec": "int", "nsec": "int" },
   "poses": {
-    "r": [float],               // Right controller 4x4 matrix (16 elements)
-    "l": [float]                // Left controller 4x4 matrix (16 elements)
+    "r": ["float"],
+    "l": ["float"]
   },
   "buttons": {
-    "A": bool, "B": bool, "X": bool, "Y": bool,
-    "RG": bool, "LG": bool,     // Right/Left grip
-    "RJ": bool, "LJ": bool,     // Right/Left joystick
-    "rightTrig": [float],       // Right trigger value
-    "leftTrig": [float]         // Left trigger value
+    "A": "bool",
+    "B": "bool",
+    "X": "bool",
+    "Y": "bool",
+    "RG": "bool",
+    "LG": "bool",
+    "RJ": "bool",
+    "LJ": "bool",
+    "rightTrig": ["float"],
+    "leftTrig": ["float"]
   },
-  "movement_enabled": bool,
-  "controller_on": bool,
-  "success": bool,
-  "failure": bool
+  "movement_enabled": "bool",
+  "controller_on": "bool",
+  "success": "bool",
+  "failure": "bool"
 }
 ```
+
+- `poses.r`, `poses.l`: Right and left controller 4x4 transformation matrices (16 elements each)
+- `buttons.RG`, `buttons.LG`: Right and left grip buttons
+- `buttons.RJ`, `buttons.LJ`: Right and left joystick buttons
+- `buttons.rightTrig`, `buttons.leftTrig`: Trigger values (0.0 to 1.0)
+- `movement_enabled`: Whether robot movement is currently enabled
+- `success`, `failure`: Recording termination flags
 
 ### Storage Location
 
