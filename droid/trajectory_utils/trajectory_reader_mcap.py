@@ -22,30 +22,33 @@ class TrajectoryReaderMCAP:
         self._messages_by_timestamp = defaultdict(dict)
         
         # Scan all messages to build an index by timestamp
-        for schema in self._reader.get_schemas():
+        for schema in self._reader.get_summary().schemas.values():
             self._schemas[schema.id] = schema
             
-        for channel in self._reader.get_channels():
+        for channel in self._reader.get_summary().channels.values():
             self._channels[channel.id] = channel
             
-        # Group messages by timestamp
+        # Collect all messages and organize by timestamp
         for msg in self._reader.iter_messages():
-            # Use log_time as our primary key for timesteps
-            time_ns = msg.log_time
-            
-            # Add to our timestamps list if this is a new timestamp
-            if time_ns not in self._messages_by_timestamp:
-                self._timestamps.append(time_ns)
-                
-            # Get channel info
             channel = self._channels[msg.channel_id]
             topic = channel.topic
             
+            # Parse the message to get timestamp
+            try:
+                msg_data = json.loads(msg.data.decode("utf-8"))
+                if "timestamp" in msg_data:
+                    ts_data = msg_data["timestamp"]
+                    time_ns = ts_data["sec"] * 1_000_000_000 + ts_data["nsec"]
+                else:
+                    time_ns = msg.log_time
+            except:
+                time_ns = msg.log_time
+            
             # Store this message keyed by topic
-            self._messages_by_timestamp[time_ns][topic] = msg
+            self._messages_by_timestamp[time_ns][topic] = msg_data
         
         # Sort timestamps to ensure sequential access
-        self._timestamps.sort()
+        self._timestamps = sorted(self._messages_by_timestamp.keys())
         self._length = len(self._timestamps)
         self._index = 0
 
@@ -58,7 +61,11 @@ class TrajectoryReaderMCAP:
             index = self._index
         else:
             self._index = index
-        assert index < self._length
+        
+        if index >= self._length:
+            return None
+            
+        self._index += 1
 
         # Get timestamp for this index
         time_ns = self._timestamps[index]
@@ -75,61 +82,95 @@ class TrajectoryReaderMCAP:
             }
         }
         
-        # Add robot state data if available
+        # Process robot state
         if "/robot_state" in messages:
-            robot_state_msg = messages["/robot_state"]
-            robot_state_data = json.loads(robot_state_msg.data)
-            timestep["observation"]["robot_state"] = robot_state_data["data"]
+            robot_data = messages["/robot_state"]
+            timestep["observation"]["robot_state"] = {
+                "joint_positions": np.array(robot_data.get("joint_positions", [])),
+                "joint_velocities": np.array(robot_data.get("joint_velocities", [])),
+                "joint_efforts": np.array(robot_data.get("joint_efforts", [])),
+                "cartesian_position": np.array(robot_data.get("cartesian_position", [])),
+                "cartesian_velocity": np.array(robot_data.get("cartesian_velocity", [])),
+                "gripper_position": robot_data.get("gripper_position", 0.0),
+                "gripper_velocity": robot_data.get("gripper_velocity", 0.0)
+            }
         
-        # Add action data if available
+        # Process action data
         if "/action" in messages:
-            action_msg = messages["/action"]
-            action_data = json.loads(action_msg.data)
-            timestep["action"] = action_data["data"]
-            
-        # Add camera extrinsics data if available
-        if "/camera_extrinsics" in messages:
-            extrinsics_msg = messages["/camera_extrinsics"]
-            extrinsics_data = json.loads(extrinsics_msg.data)
-            timestep["observation"]["camera_extrinsics"] = extrinsics_data["data"]
-            
-        # Add camera intrinsics data if available
-        if "/camera_intrinsics" in messages:
-            intrinsics_msg = messages["/camera_intrinsics"]
-            intrinsics_data = json.loads(intrinsics_msg.data)
-            timestep["observation"]["camera_intrinsics"] = intrinsics_data["data"]
-            
-        # Add camera type data if available
-        if "/camera_type" in messages:
-            camera_type_msg = messages["/camera_type"]
-            camera_type_data = json.loads(camera_type_msg.data)
-            timestep["observation"]["camera_type"] = camera_type_data["data"]
-            
-        # Add image data if requested and available
+            action_data = messages["/action"]
+            timestep["action"] = np.array(action_data.get("data", []))
+        
+        # Process camera images
         if self._read_images:
-            timestep["observation"]["image"] = {}
-            
-            # Process all camera topics
-            for topic, msg in messages.items():
+            image_dict = {}
+            for topic, msg_data in messages.items():
                 if topic.startswith("/camera/") and topic.endswith("/compressed"):
-                    # Extract camera ID from topic
-                    camera_id = topic.split('/')[2]
+                    # Extract camera ID from topic like "/camera/12345_left/compressed"
+                    camera_id = topic.split("/camera/")[1].split("/compressed")[0]
                     
-                    # Parse image data
-                    image_data = json.loads(msg.data)
-                    image_bytes = base64.b64decode(image_data["data"])
-                    
-                    # Convert to numpy array
-                    img_np = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
-                    
-                    # Add to timestep
-                    timestep["observation"]["image"][camera_id] = img_np
+                    # Decode base64 image data
+                    if "data" in msg_data:
+                        try:
+                            img_bytes = base64.b64decode(msg_data["data"])
+                            img_array = np.frombuffer(img_bytes, dtype=np.uint8)
+                            image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+                            if image is not None:
+                                image_dict[camera_id] = image
+                        except Exception as e:
+                            print(f"Failed to decode image for camera {camera_id}: {e}")
+                            continue
+            
+            if image_dict:
+                timestep["observation"]["image"] = image_dict
         
-        # Increment read index
-        self._index += 1
+        # Process audio data
+        if "/audio/microphone" in messages:
+            audio_data = messages["/audio/microphone"]
+            try:
+                audio_bytes = base64.b64decode(audio_data["data"])
+                timestep["observation"]["audio"] = {
+                    "data": audio_bytes,
+                    "sample_rate": audio_data.get("sample_rate", 44100),
+                    "encoding": audio_data.get("encoding", "pcm_f32le")
+                }
+            except Exception as e:
+                print(f"Failed to decode audio data: {e}")
         
-        # Return timestep
+        # Process VR controller data
+        if "/vr_controller" in messages:
+            vr_data = messages["/vr_controller"]
+            controller_info = {
+                "poses": vr_data.get("poses", {}),
+                "buttons": vr_data.get("buttons", {}),
+                "movement_enabled": vr_data.get("movement_enabled", False),
+                "controller_on": vr_data.get("controller_on", True),
+                "success": vr_data.get("success", False),
+                "failure": vr_data.get("failure", False)
+            }
+            
+            # Convert pose lists back to numpy arrays
+            if "poses" in controller_info and controller_info["poses"]:
+                for pose_key, pose_list in controller_info["poses"].items():
+                    if isinstance(pose_list, list) and len(pose_list) == 16:
+                        # Reshape flat list back to 4x4 matrix
+                        controller_info["poses"][pose_key] = np.array(pose_list).reshape(4, 4)
+                    elif isinstance(pose_list, list):
+                        controller_info["poses"][pose_key] = np.array(pose_list)
+            
+            timestep["observation"]["controller_info"] = controller_info
+        
         return timestep
 
+    def get_trajectory(self, keys_to_ignore=[]):
+        """Read the entire trajectory as a list of timesteps"""
+        trajectory = []
+        for i in range(self._length):
+            timestep = self.read_timestep(i, keys_to_ignore)
+            if timestep is not None:
+                trajectory.append(timestep)
+        return trajectory
+
     def close(self):
-        self._mcap_file.close() 
+        """Close the MCAP file"""
+        if hasattr(self, '_mcap_file'):
+            self._mcap_file.close() 
