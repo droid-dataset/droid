@@ -9,7 +9,7 @@ from droid.plotting.text import *
 # Gather Graphical Data #
 data_path = None  # "/Volumes/DROID_Drive/MyDrive/DROID: Weekly Lab Data/IPRL"
 dir_path = os.path.dirname(os.path.realpath(__file__))
-data_directory = os.path.join(dir_path, "../../", "data") if data_path is None else data_path
+data_directory = os.path.expanduser("~/recordings") if data_path is None else data_path
 PLOT_FOLDERPATH = os.path.join(dir_path, "../../", "plots")
 if not os.path.exists(PLOT_FOLDERPATH):
     os.makedirs(PLOT_FOLDERPATH)

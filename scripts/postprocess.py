@@ -55,7 +55,7 @@ REGISTERED_ALIASES: Dict[str, Tuple[str, str]] = {
 class DROIDUploadConfig:
     # fmt: off
     lab: str                                        # Lab ID (all uppercase) -- e.g., "CLVR", "ILIAD", "REAL"
-    data_dir: Path = Path("data")                   # Path to top-level directory with "success"/"failure" directories
+    data_dir: Path = Path(os.path.expanduser("~/recordings"))  # Path to top-level directory with "success"/"failure" directories
 
     # Stage Handling
     do_index: bool = True                           # Whether to run an initial indexing pass prior to processing stage

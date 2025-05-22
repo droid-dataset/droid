@@ -53,7 +53,7 @@ REGISTERED_ALIASES: Dict[str, Tuple[str, str]] = {
 class DROIDConversionConfig:
     # fmt: off
     lab: str                                        # Lab ID (all uppercase) -- e.g., "CLVR", "ILIAD", "REAL"
-    data_dir: Path = Path("data")                   # Path to top-level directory, if lab_agnostic=False it should contain "success"/"failure" directories
+    data_dir: Path = Path(os.path.expanduser("~/recordings"))  # Path to top-level directory, if lab_agnostic=False it should contain "success"/"failure" directories
     lab_agnostic: bool = True                       # Determines whether to only convert your lab's data or all data
 
     # Stage Handling
