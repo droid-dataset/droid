@@ -184,9 +184,9 @@ class DataCollecter:
         if os.path.exists(h5_filepath):
             # Using H5 format
             traj_file = h5py.File(h5_filepath, "r+")
-            traj_file.attrs["success"] = success
-            traj_file.attrs["failure"] = not success
-            traj_file.close()
+        traj_file.attrs["success"] = success
+        traj_file.attrs["failure"] = not success
+        traj_file.close()
         elif os.path.exists(mcap_filepath) and self.use_mcap:
             # For MCAP format, we can't directly modify the file
             # We would need to create a new file with updated metadata

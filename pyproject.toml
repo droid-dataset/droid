@@ -30,6 +30,7 @@ dependencies = [
     "opencv-python==4.5.5.64",
     "packaging",
     "pandas",
+    "pyaudio>=0.2.11",
     "Pillow",
     "pybullet",
     "pyquaternion",

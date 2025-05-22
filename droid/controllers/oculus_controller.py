@@ -177,12 +177,19 @@ class VRPolicy:
             return action
 
     def get_info(self):
-        return {
+        info = {
             "success": self._state["buttons"]["A"] if self.controller_id == 'r' else self._state["buttons"]["X"],
             "failure": self._state["buttons"]["B"] if self.controller_id == 'r' else self._state["buttons"]["Y"],
             "movement_enabled": self._state["movement_enabled"],
             "controller_on": self._state["controller_on"],
         }
+        
+        # Add raw VR controller data for recording
+        if self._state["poses"] and self._state["buttons"]:
+            info["poses"] = self._state["poses"]
+            info["buttons"] = self._state["buttons"]
+            
+        return info
 
     def forward(self, obs_dict, include_info=False):
         if self._state["poses"] == {}:

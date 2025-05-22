@@ -6,6 +6,7 @@ import numpy as np
 from droid.calibration.calibration_utils import load_calibration_info
 from droid.camera_utils.info import camera_type_dict
 from droid.camera_utils.wrappers.multi_camera_wrapper import MultiCameraWrapper
+from droid.camera_utils.recording_readers.microphone_reader import MicrophoneReader
 from droid.misc.parameters import hand_camera_id, nuc_ip
 from droid.misc.server_interface import ServerInterface
 from droid.misc.time import time_ms
@@ -13,7 +14,7 @@ from droid.misc.transformations import change_pose_frame
 
 
 class RobotEnv(gym.Env):
-    def __init__(self, action_space="cartesian_velocity", gripper_action_space=None, camera_kwargs={}, do_reset=True):
+    def __init__(self, action_space="cartesian_velocity", gripper_action_space=None, camera_kwargs={}, do_reset=True, enable_microphone=True):
         # Initialize Gym Environment
         super().__init__()
 
@@ -41,6 +42,13 @@ class RobotEnv(gym.Env):
         self.camera_reader = MultiCameraWrapper(camera_kwargs)
         self.calibration_dict = load_calibration_info()
         self.camera_type_dict = camera_type_dict
+
+        # Create Microphone Reader
+        self.enable_microphone = enable_microphone
+        if enable_microphone:
+            self.microphone_reader = MicrophoneReader()
+        else:
+            self.microphone_reader = None
 
         # Reset Robot
         if do_reset:
@@ -87,6 +95,22 @@ class RobotEnv(gym.Env):
     def read_cameras(self):
         return self.camera_reader.read_cameras()
 
+    def read_microphone(self):
+        """Read microphone data if available"""
+        if self.microphone_reader and self.microphone_reader.is_recording():
+            return self.microphone_reader.get_all_audio_data()
+        return []
+
+    def start_microphone_recording(self):
+        """Start microphone recording"""
+        if self.microphone_reader:
+            self.microphone_reader.start_recording()
+
+    def stop_microphone_recording(self):
+        """Stop microphone recording"""
+        if self.microphone_reader:
+            self.microphone_reader.stop_recording()
+
     def get_state(self):
         read_start = time_ms()
         state_dict, timestamp_dict = self._robot.get_robot_state()
@@ -118,6 +142,14 @@ class RobotEnv(gym.Env):
         obs_dict.update(camera_obs)
         obs_dict["timestamp"]["cameras"] = camera_timestamp
 
+        # Microphone Readings #
+        if self.enable_microphone:
+            audio_data = self.read_microphone()
+            if audio_data:
+                # Use the most recent audio chunk
+                latest_audio = audio_data[-1]
+                obs_dict["audio"] = latest_audio
+
         # Camera Info #
         obs_dict["camera_type"] = deepcopy(self.camera_type_dict)
         extrinsics = self.get_camera_extrinsics(state_dict)
@@ -131,3 +163,10 @@ class RobotEnv(gym.Env):
         obs_dict["camera_intrinsics"] = intrinsics
 
         return obs_dict
+
+    def close(self):
+        """Clean up resources"""
+        if hasattr(self, 'camera_reader'):
+            self.camera_reader.disable_cameras()
+        if hasattr(self, 'microphone_reader') and self.microphone_reader:
+            self.microphone_reader.close()

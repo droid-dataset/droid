@@ -62,17 +62,136 @@ The Droid Franka Robots framework supports two data storage formats:
 
 2. **HDF5 Format (Legacy)** - The original format used for storing trajectory data.
 
-To convert existing HDF5 files to MCAP format, use the provided conversion tool:
+### MCAP Sensor Data Coverage
 
-```bash
-python scripts/convert/h5_to_mcap.py path/to/file.h5
+The MCAP implementation captures comprehensive sensor data from all modalities used in the DROID system:
+
+#### **Robot Data**
+
+- **Joint State**: 7-DOF joint positions, velocities, and efforts
+- **Cartesian State**: 6-DOF end-effector position and velocity (x,y,z,rx,ry,rz)
+- **Gripper State**: Position and velocity
+- **Control Actions**: 7-DOF robot control commands
+
+#### **Camera Data**
+
+- **3 ZED Cameras**: Complete stereo vision setup
+  - Hand camera (attached to robot gripper)
+  - Two third-person cameras for scene observation
+  - Left and right stereo images from each camera (6 images total)
+- **Image Format**: JPEG compressed for efficient storage
+- **Camera Calibration**: Intrinsics and extrinsics data included
+
+#### **Audio Data**
+
+- **Microphone**: Single channel audio recording
+- **Format**: PCM 16-bit encoding at 44.1 kHz sample rate
+- **Encoding**: Base64 encoded for MCAP storage
+
+#### **VR Controller Data**
+
+- **Meta Quest/Oculus Controllers**: Complete teleoperation state capture
+- **Poses**: 4x4 transformation matrices for left and right controllers
+- **Buttons**: All button states (A, B, X, Y, triggers, grip, joystick)
+- **Control State**: Movement enabled/disabled, controller connectivity, success/failure flags
+
+### MCAP Data Schema
+
+#### **Topic Structure**
+
+```
+/robot_state               - Robot joint and cartesian state
+/action                    - Control actions sent to robot
+/camera/{id}/compressed    - Compressed images from each camera
+/audio/microphone          - Audio data from microphone
+/vr_controller             - VR controller poses, buttons, and state
 ```
 
-### Data Storage Location
+#### **Message Schemas**
 
-By default, all recordings are stored in the `~/recordings` directory in your home folder. The directory will be created automatically if it doesn't exist, with the following structure:
+**Robot State** (`droid.RobotState`)
 
-- `~/recordings/success/` - Contains successful trajectories
-- `~/recordings/failure/` - Contains failed trajectories
+```json
+{
+  "timestamp": {"sec": int, "nsec": int},
+  "joint_positions": [float],     // 7 elements
+  "joint_velocities": [float],    // 7 elements
+  "joint_efforts": [float],       // 7 elements
+  "cartesian_position": [float],  // 6 elements (x,y,z,rx,ry,rz)
+  "cartesian_velocity": [float],  // 6 elements
+  "gripper_position": float,
+  "gripper_velocity": float
+}
+```
 
-Each trajectory is stored in a date-based folder structure for easy organization.
+**Camera Images** (`foxglove.CompressedImage`)
+
+```json
+{
+  "timestamp": {"sec": int, "nsec": int},
+  "frame_id": string,           // Camera identifier (e.g. "12345_left")
+  "data": string,               // Base64 encoded JPEG data
+  "format": "jpeg"
+}
+```
+
+**Actions** (`droid.Action`)
+
+```json
+{
+  "timestamp": {"sec": int, "nsec": int},
+  "data": [float]               // 7-DOF action vector
+}
+```
+
+**Audio** (`foxglove.RawAudio`)
+
+```json
+{
+  "timestamp": {"sec": int, "nsec": int},
+  "frame_id": "microphone",
+  "encoding": "pcm_16le",       // PCM 16-bit little endian
+  "sample_rate": 44100,
+  "data": string                // Base64 encoded audio data
+}
+```
+
+**VR Controller** (`droid.VRController`)
+
+```json
+{
+  "timestamp": {"sec": int, "nsec": int},
+  "poses": {
+    "r": [float],               // Right controller 4x4 matrix (16 elements)
+    "l": [float]                // Left controller 4x4 matrix (16 elements)
+  },
+  "buttons": {
+    "A": bool, "B": bool, "X": bool, "Y": bool,
+    "RG": bool, "LG": bool,     // Right/Left grip
+    "RJ": bool, "LJ": bool,     // Right/Left joystick
+    "rightTrig": [float],       // Right trigger value
+    "leftTrig": [float]         // Left trigger value
+  },
+  "movement_enabled": bool,
+  "controller_on": bool,
+  "success": bool,
+  "failure": bool
+}
+```
+
+### Storage Location
+
+All recordings are stored in `~/recordings/` with the following structure:
+
+```
+~/recordings/
+├── success/           # Successful demonstrations
+├── failure/           # Failed attempts
+└── evaluation_logs/   # Policy evaluation logs
+```
+
+To convert existing HDF5 files to MCAP format:
+
+```bash
+python scripts/convert/h5_to_mcap.py input_file.h5 output_file.mcap
+```

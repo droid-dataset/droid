@@ -21,123 +21,107 @@ from droid.trajectory_utils.trajectory_writer_mcap import TrajectoryWriterMCAP
 
 def collect_trajectory(
     env,
-    controller=None,
-    policy=None,
-    horizon=None,
+    controller,
     save_filepath=None,
+    recording_folderpath=None,
     metadata=None,
-    wait_for_controller=False,
-    obs_pointer=None,
-    save_images=False,
-    recording_folderpath=False,
-    randomize_reset=False,
     reset_robot=True,
+    policy=None,
+    controller_type="ControllerInterface",
+    obs_pointer=None,
+    wait_for_controller=False,
+    step_wait_time=None,
     use_mcap=True,
 ):
-    """
-    Collects a robot trajectory.
-    - If policy is None, actions will come from the controller
-    - If a horizon is given, we will step the environment accordingly
-    - Otherwise, we will end the trajectory when the controller tells us to
-    - If you need a pointer to the current observation, pass a dictionary in for obs_pointer
-    """
+    """Collect a trajectory and store the data"""
 
-    # Check Parameters #
-    assert (controller is not None) or (policy is not None)
-    assert (controller is not None) or (horizon is not None)
-    if wait_for_controller:
-        assert controller is not None
     if obs_pointer is not None:
         assert isinstance(obs_pointer, dict)
-    if save_images:
-        assert save_filepath is not None
 
-    # Reset States #
-    if controller is not None:
-        controller.reset_state()
-    env.camera_reader.set_trajectory_mode()
-
-    # Prepare Data Writers If Necesary #
-    if save_filepath:
-        # If using MCAP, modify filepath extension
-        if use_mcap:
-            save_filepath_base, _ = os.path.splitext(save_filepath)
-            mcap_filepath = save_filepath_base + ".mcap"
-            traj_writer = TrajectoryWriterMCAP(mcap_filepath, metadata=metadata, save_images=save_images)
-        else:
-            traj_writer = TrajectoryWriter(save_filepath, metadata=metadata, save_images=save_images)
-    if recording_folderpath:
-        env.camera_reader.start_recording(recording_folderpath)
-
-    # Prepare For Trajectory #
-    num_steps = 0
+    # Reset Robot #
     if reset_robot:
-        env.reset(randomize=randomize_reset)
+        env.reset()
+    controller.reset_state()
 
-    # Begin! #
-    while True:
-        # Collect Miscellaneous Info #
-        controller_info = {} if (controller is None) else controller.get_info()
-        skip_action = wait_for_controller and (not controller_info["movement_enabled"])
-        control_timestamps = {"step_start": time_ms()}
+    # Open TrajectorWriter #
+    assert save_filepath is not None
+    if use_mcap:
+        from droid.trajectory_utils.trajectory_writer_mcap import TrajectoryWriterMCAP
+        writer = TrajectoryWriterMCAP(save_filepath, metadata=metadata, save_images=True)
+    else:
+        writer = TrajectoryWriter(save_filepath, metadata=metadata, save_images=True)
 
-        # Get Observation #
-        obs = env.get_observation()
-        if obs_pointer is not None:
-            obs_pointer.update(obs)
-        obs["controller_info"] = controller_info
-        obs["timestamp"]["skip_action"] = skip_action
+    # Start camera and microphone recording
+    if recording_folderpath is not None:
+        env.camera_reader.start_recording(recording_folderpath)
+    
+    # Start microphone recording if available
+    if hasattr(env, 'start_microphone_recording'):
+        env.start_microphone_recording()
 
-        # Get Action #
-        control_timestamps["policy_start"] = time_ms()
-        if policy is None:
-            action, controller_action_info = controller.forward(obs, include_info=True)
-        else:
-            action = policy.forward(obs)
-            controller_action_info = {}
+    # Save Metadata #
+    metadata = metadata or {}
+    metadata["controller_type"] = controller_type
 
-        # Regularize Control Frequency #
-        control_timestamps["sleep_start"] = time_ms()
-        comp_time = time_ms() - control_timestamps["step_start"]
-        sleep_left = (1 / env.control_hz) - (comp_time / 1000)
-        if sleep_left > 0:
-            time.sleep(sleep_left)
+    timestep = 0
+    try:
+        while True:
+            start_time = time.time()
 
-        # Moniter Control Frequency #
-        # moniter_control_frequency = True
-        # if moniter_control_frequency:
-        # 	print('Sleep Left: ', sleep_left)
-        # 	print('Feasible Hz: ', (1000 / comp_time))
+            # Get Observation #
+            obs = env.get_observation()
+            if obs_pointer is not None:
+                obs_pointer.update(obs)
 
-        # Step Environment #
-        control_timestamps["control_start"] = time_ms()
-        if skip_action:
-            action_info = env.create_action_dict(np.zeros_like(action))
-        else:
-            action_info = env.step(action)
-        action_info.update(controller_action_info)
+            # Get Action From Controller#
+            controller_info = controller.get_info()
+            action = controller.forward(obs)
+            
+            # Add VR controller data to observation
+            obs["controller_info"] = controller_info
 
-        # Save Data #
-        control_timestamps["step_end"] = time_ms()
-        obs["timestamp"]["control"] = control_timestamps
-        timestep = {"observation": obs, "action": action_info}
-        if save_filepath:
-            traj_writer.write_timestep(timestep)
+            # Check For Early Termination #
+            if controller_info["success"] or controller_info["failure"]:
+                break
 
-        # Check Termination #
-        num_steps += 1
-        if horizon is not None:
-            end_traj = horizon == num_steps
-        else:
-            end_traj = controller_info["success"] or controller_info["failure"]
+            # Save Trajectory #
+            timestep_data = {"observation": obs, "action": action}
+            writer.write_timestep(timestep_data)
 
-        # Close Files And Return #
-        if end_traj:
-            if recording_folderpath:
-                env.camera_reader.stop_recording()
-            if save_filepath:
-                traj_writer.close(metadata=controller_info)
-            return controller_info
+            # Take Environment Action #
+            skip_step = wait_for_controller and (not controller_info["movement_enabled"])
+            if not skip_step:
+                env.step(action)
+
+            # Regulate Control Rate #
+            if step_wait_time is not None:
+                time.sleep(step_wait_time)
+            else:
+                comp_time = time.time() - start_time
+                sleep_left = (1 / env.control_hz) - comp_time
+                if sleep_left > 0:
+                    time.sleep(sleep_left)
+
+            timestep += 1
+
+    except KeyboardInterrupt:
+        controller_info = {"success": False, "failure": True}
+
+    # Stop recording
+    if recording_folderpath is not None:
+        env.camera_reader.stop_recording()
+    
+    # Stop microphone recording if available
+    if hasattr(env, 'stop_microphone_recording'):
+        env.stop_microphone_recording()
+
+    # Save To HDF5 File #
+    metadata.update(controller_info)
+    metadata["timesteps"] = timestep
+    metadata["success"] = controller_info["success"]
+    writer.close(metadata=metadata)
+
+    return controller_info
 
 
 def calibrate_camera(
