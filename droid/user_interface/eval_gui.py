@@ -18,7 +18,11 @@ from droid.robot_env import RobotEnv
 from droid.user_interface.data_collector import DataCollecter
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-data_dir = os.path.join(dir_path, "../../evaluation_logs")
+data_dir = os.path.expanduser("~/recordings/evaluation_logs")
+
+# Create the directory if it doesn't exist
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir, exist_ok=True)
 
 LAST_N_GOALS = 5
 MIDDLE_COLUMN = 4

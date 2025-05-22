@@ -2,6 +2,7 @@ import os
 import time
 from copy import deepcopy
 from datetime import date
+import pathlib
 
 import cv2
 import h5py
@@ -10,16 +11,21 @@ import droid.trajectory_utils.misc as tu
 from droid.calibration.calibration_utils import check_calibration_info
 from droid.misc.parameters import hand_camera_id, droid_version, robot_serial_number, robot_type
 
-# Prepare Data Folder #
-dir_path = os.path.dirname(os.path.realpath(__file__))
-data_dir = os.path.join(dir_path, "../../data")
+# Use ~/recordings as the data directory
+home_dir = str(pathlib.Path.home())
+data_dir = os.path.join(home_dir, "recordings")
+
+# Create the recordings directory if it doesn't exist
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir, exist_ok=True)
 
 
 class DataCollecter:
-    def __init__(self, env, controller, policy=None, save_data=True, save_traj_dir=None):
+    def __init__(self, env, controller, policy=None, save_data=True, save_traj_dir=None, use_mcap=True):
         self.env = env
         self.controller = controller
         self.policy = policy
+        self.use_mcap = use_mcap
 
         self.last_traj_path = None
         self.traj_running = False
@@ -35,15 +41,15 @@ class DataCollecter:
         self.full_cam_ids = full_cam_ids
         self.advanced_calibration = False
 
-        # Make Sure Log Directorys Exist #
+        # Make Sure Log Directories Exist #
         if save_traj_dir is None:
             save_traj_dir = data_dir
         self.success_logdir = os.path.join(save_traj_dir, "success", str(date.today()))
         self.failure_logdir = os.path.join(save_traj_dir, "failure", str(date.today()))
         if not os.path.isdir(self.success_logdir):
-            os.makedirs(self.success_logdir)
+            os.makedirs(self.success_logdir, exist_ok=True)
         if not os.path.isdir(self.failure_logdir):
-            os.makedirs(self.failure_logdir)
+            os.makedirs(self.failure_logdir, exist_ok=True)
         self.save_data = save_data
 
     def reset_robot(self, randomize=False):
@@ -84,8 +90,19 @@ class DataCollecter:
         else:
             if len(self.full_cam_ids) != 6:
                 raise ValueError("WARNING: User is trying to collect data without all three cameras running!")
-            save_filepath = os.path.join(self.failure_logdir, info["time"], "trajectory.h5")
-            recording_folderpath = os.path.join(self.failure_logdir, info["time"], "recordings")
+            
+            # Create the trajectory directory
+            traj_dir = os.path.join(self.failure_logdir, info["time"])
+            if not os.path.isdir(traj_dir):
+                os.makedirs(traj_dir)
+                
+            # Set file extension based on format
+            if self.use_mcap:
+                save_filepath = os.path.join(traj_dir, "trajectory.mcap")
+            else:
+                save_filepath = os.path.join(traj_dir, "trajectory.h5")
+                
+            recording_folderpath = os.path.join(traj_dir, "recordings")
             if not os.path.isdir(recording_folderpath):
                 os.makedirs(recording_folderpath)
 
@@ -102,6 +119,7 @@ class DataCollecter:
             recording_folderpath=recording_folderpath,
             save_filepath=save_filepath,
             wait_for_controller=True,
+            use_mcap=self.use_mcap,
         )
         self.traj_running = False
         self.obs_pointer = {}
@@ -159,11 +177,24 @@ class DataCollecter:
         if (self.last_traj_path is None) or (success == self.traj_saved):
             return
 
-        save_filepath = os.path.join(self.last_traj_path, "trajectory.h5")
-        traj_file = h5py.File(save_filepath, "r+")
-        traj_file.attrs["success"] = success
-        traj_file.attrs["failure"] = not success
-        traj_file.close()
+        # Check if using MCAP or H5 format
+        h5_filepath = os.path.join(self.last_traj_path, "trajectory.h5")
+        mcap_filepath = os.path.join(self.last_traj_path, "trajectory.mcap")
+        
+        if os.path.exists(h5_filepath):
+            # Using H5 format
+            traj_file = h5py.File(h5_filepath, "r+")
+            traj_file.attrs["success"] = success
+            traj_file.attrs["failure"] = not success
+            traj_file.close()
+        elif os.path.exists(mcap_filepath) and self.use_mcap:
+            # For MCAP format, we can't directly modify the file
+            # We would need to create a new file with updated metadata
+            # For now, we'll just handle the directory move logic
+            pass
+        else:
+            print(f"Warning: No trajectory file found at {self.last_traj_path}")
+            return
 
         if success:
             new_traj_path = os.path.join(self.success_logdir, self.last_traj_name)
