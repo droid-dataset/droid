@@ -1,6 +1,7 @@
 import time
 from collections import defaultdict
 from copy import deepcopy
+import os
 
 import cv2
 import numpy as np
@@ -14,6 +15,8 @@ from droid.misc.time import time_ms
 from droid.misc.transformations import change_pose_frame
 from droid.trajectory_utils.trajectory_reader import TrajectoryReader
 from droid.trajectory_utils.trajectory_writer import TrajectoryWriter
+from droid.trajectory_utils.trajectory_reader_mcap import TrajectoryReaderMCAP
+from droid.trajectory_utils.trajectory_writer_mcap import TrajectoryWriterMCAP
 
 
 def collect_trajectory(
@@ -29,6 +32,7 @@ def collect_trajectory(
     recording_folderpath=False,
     randomize_reset=False,
     reset_robot=True,
+    use_mcap=True,
 ):
     """
     Collects a robot trajectory.
@@ -55,7 +59,13 @@ def collect_trajectory(
 
     # Prepare Data Writers If Necesary #
     if save_filepath:
-        traj_writer = TrajectoryWriter(save_filepath, metadata=metadata, save_images=save_images)
+        # If using MCAP, modify filepath extension
+        if use_mcap:
+            save_filepath_base, _ = os.path.splitext(save_filepath)
+            mcap_filepath = save_filepath_base + ".mcap"
+            traj_writer = TrajectoryWriterMCAP(mcap_filepath, metadata=metadata, save_images=save_images)
+        else:
+            traj_writer = TrajectoryWriter(save_filepath, metadata=metadata, save_images=save_images)
     if recording_folderpath:
         env.camera_reader.start_recording(recording_folderpath)
 
@@ -323,11 +333,21 @@ def load_trajectory(
     remove_skipped_steps=False,
     num_samples_per_traj=None,
     num_samples_per_traj_coeff=1.5,
+    use_mcap=True,
 ):
     read_hdf5_images = read_cameras and (recording_folderpath is None)
     read_recording_folderpath = read_cameras and (recording_folderpath is not None)
 
-    traj_reader = TrajectoryReader(filepath, read_images=read_hdf5_images)
+    # Check file extension to determine format
+    _, ext = os.path.splitext(filepath)
+    is_mcap = ext.lower() == '.mcap'
+    
+    # Use the appropriate reader based on format
+    if is_mcap and use_mcap:
+        traj_reader = TrajectoryReaderMCAP(filepath, read_images=read_hdf5_images)
+    else:
+        traj_reader = TrajectoryReader(filepath, read_images=read_hdf5_images)
+        
     if read_recording_folderpath:
         camera_reader = RecordedMultiCameraWrapper(recording_folderpath, camera_kwargs)
 
@@ -346,7 +366,7 @@ def load_trajectory(
 
     # Iterate Over Trajectory #
     for i in indices_to_save:
-        # Get HDF5 Data #
+        # Get Data #
         timestep = traj_reader.read_timestep(index=i)
 
         # If Applicable, Get Recorded Data #

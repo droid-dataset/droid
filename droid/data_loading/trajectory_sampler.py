@@ -54,7 +54,7 @@ def generate_train_test_split(filter_func=None, remove_failures=True, train_p=0.
 def collect_data_folderpaths(filter_func=None, remove_failures=True):
     # Prepare Data Folder #
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(dir_path, "../../data")
+    data_dir = os.path.expanduser("~/recordings")
     if remove_failures:
         data_dir = os.path.join(data_dir, "success")
 
