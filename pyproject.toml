@@ -10,7 +10,7 @@ authors = [
 description = "Distributed Robot Interaction Dataset"
 version = "0.0.1"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 keywords = ["robotics"]
 dependencies = [
     "boto3",
@@ -21,7 +21,7 @@ dependencies = [
     "imageio>=2.31.2",
     "imageio-ffmpeg>=0.5.1",
     "matplotlib",
-    "mujoco==2.3.2",
+    "mujoco",
     "open3d",
     "opencv-contrib-python>=4.11.0.86",
     "Pillow",
@@ -32,7 +32,11 @@ dependencies = [
     "tqdm",
     "tyro>=0.9.1",
     "zerorpc",
+    "lerobot",
 ]
+
+[tool.uv.sources]
+lerobot = { git = "https://github.com/huggingface/lerobot", rev = "0cf864870cf29f4738d3ade893e6fd13fbd7cdb5" }
 
 [project.optional-dependencies]
 dev = [
@@ -71,5 +75,5 @@ filter_files = true
 py_version = "all"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 exclude = ["cache"]

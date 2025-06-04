@@ -110,7 +110,8 @@ class TrajectoryReader:
                 # self._video_readers[video_id]._depth = 4
 
             # Read Next Frame #
-            camera_obs[video_id] = yield self._video_readers[video_id]
+            # camera_obs[video_id] = yield self._video_readers[video_id]
+            camera_obs[video_id] = self._video_readers[video_id].get_next_data()
             # Future Note: Could Make Thread For Each Image Reader
 
         # Return Camera Observation #
