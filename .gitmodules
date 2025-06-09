@@ -4,3 +4,6 @@
 [submodule "src/droid//fairo"]
 	path = droid/fairo
 	url = https://github.com/facebookresearch/fairo.git
+[submodule "submodules/openpi"]
+	path = submodules/openpi
+	url = https://github.com/Physical-Intelligence/openpi.git
