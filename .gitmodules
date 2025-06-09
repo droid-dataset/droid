@@ -1,9 +1,9 @@
-[submodule "src/droid/oculus_reader"]
-	path = droid/oculus_reader
-	url = git@github.com:rail-berkeley/oculus_reader.git
-[submodule "src/droid//fairo"]
-	path = droid/fairo
-	url = https://github.com/facebookresearch/fairo.git
 [submodule "submodules/openpi"]
 	path = submodules/openpi
 	url = https://github.com/Physical-Intelligence/openpi.git
+[submodule "droid/fairo"]
+	path = droid/fairo
+	url = https://github.com/facebookresearch/fairo.git
+[submodule "droid/oculus_reader"]
+	path = droid/oculus_reader
+	url = https://github.com/rail-berkeley/oculus_reader.git
