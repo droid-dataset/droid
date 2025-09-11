@@ -1,4 +1,6 @@
 data/
+droid.egg-info/
+runs/
 
 *.DS_Store
 
