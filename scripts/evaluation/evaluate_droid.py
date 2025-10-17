@@ -164,7 +164,7 @@ def main(args: Args):
         video = np.stack(video)
         # save_filename = "video_" + timestamp
         save_filename = run_dir / f"{instruction.replace(' ', '-')}_{timestamp}.mp4"
-        ImageSequenceClip(list(video), fps=30).write_videofile(save_filename, codec="libx264")
+        ImageSequenceClip(list(video), fps=30).write_videofile(str(save_filename), codec="libx264")
 
         env.reset()
 
