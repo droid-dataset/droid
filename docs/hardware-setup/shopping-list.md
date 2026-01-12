@@ -7,19 +7,19 @@ nav_order: 1
 
 # Shopping List
 
-## Approximate Total Cost: $20,000
+## Approximate Total Cost: ~~$20,000~~ $46,000 (updated ~Sept 2025)
 
 ## Robot:
 
 | Component | Quantity | Approximate Component Cost | Suppliers |
 | --------- | -------- | -------------------------- | --------- |
-| Franka Emika Panda (or) Franka Research 3 | 1 | $10,500 | [Franka Robotics](https://lp.franka.de/request-a-quote) |
+| Franka Emika Panda (or) Franka Research 3 | 1 | ~~$10,500~~ $35,000 (after tarifs in the US, the $10k was most likely fake news in the first place) | [Franka Robotics](https://franka.de/franka-research-3#request-a-quote-fr) |
 
 ## Gripper:
 
 | Component | Quantity | Approximate Component Cost | Suppliers |
 | --------- | -------- | -------------------------- | --------- |
-| 2F-85 Robotiq Gripper | 1 | $4,700 | [Robotiq Official Site](https://robotiq.com/products/2f85-140-adaptive-robot-gripper) |
+| 2F-85 Robotiq Gripper | 1 | ~~$4,700~~ $6,000 | [Robotiq Official Site](https://robotiq.com/products/2f85-140-adaptive-robot-gripper) |
 | Power Supply | 1 | $13 | [Amazon US](https://www.amazon.com/SHNITPWR-Converter-Transformer-100-240V-5-5x2-5mm/dp/B07SDRDV5B/ref=sr_1_5?gclid=Cj0KCQjwkOqZBhDNARIsAACsbfLAkpfvkq7tgnpHcJb2H4Eg7Q8Df5htlSW5inOVLktYBrb2sOOB500aAsY5EALw_wcB&hvadid=174221512760&hvdev=c&hvlocphy=9031969&hvnetw=g&hvqmt=e&hvrand=18374790677584297399&hvtargid=kwd-16464769873&hydadcr=19109_9441157&keywords=24v%2B2a%2Bpower%2Bsupply&qid=1664826676&qu=eyJxc2MiOiIzLjg2IiwicXNhIjoiMy41NyIsInFzcCI6IjMuNDIifQ%3D%3D&sr=8-5&th=1) |
 
 ## Computers:
@@ -27,7 +27,7 @@ nav_order: 1
 | Component | Quantity | Approximate Component Cost | Suppliers |
 | --------- | -------- | -------------------------- | --------- |
 | NUC | 1 | $500 | [Amazon US](https://www.amazon.com/NUC11PAHi7-Mainsteam-Barebone%EF%BC%8CIntel-i7-1165G7-Components/dp/B09BKRRT2Y/ref=sr_1_3?crid=MA71JDIBHYBB&keywords=NUC%2B11%2Bi7&qid=1669688069&sprefix=nuc%2B11%2Bi7%2Caps%2C192&sr=8-3&th=1) |
-| Razer Blade 15 - QHD 240 Hz - GeForce RTX 4070 - Black  | 1 | $2,400 | [Razer](https://www.razer.com/gaming-laptops/Razer-Blade-15/RZ09-0485ZED3-R3U1) |
+| Razer Blade 15 - QHD 240 Hz - GeForce RTX 4070 - Black  | 1 | ~~$2,400~~ (no longer available, just buy a decent Linux laptop or tower depending on whether you want to easily move the setup around; beefy onboard GPU only required if you don't want to run remote inference, but maybe get at least a small on-board NVIDIA GPU to be safe) | ~~[Razer](https://www.razer.com/gaming-laptops/Razer-Blade-15/RZ09-0485ZED3-R3U1)~~ |
 | Oculus Quest | 1 | $249 | [Meta Store](https://www.meta.com/us/quest/products/quest-2/) |
 | Monitor and Keyboard (no specific specification) | 1 | $100 |  |
 
@@ -74,4 +74,3 @@ nav_order: 1
 | Power Strip | 1 | $22 | [Amazon US](https://www.amazon.com/Alestor-Protector-Outlets-Extension-Essentials/dp/B08P5LRY37/ref=mp_s_a_1_8?crid=3F3BGM9NP2U08&keywords=power%2Bstrip&qid=1674789403&sprefix=power%2Bst%2Caps%2C182&sr=8-8&th=1) |
 | Extension Cord | 1 | $11 | [Amazon US](https://www.amazon.com/AmazonBasics-Extension-Cord-feet-Black/dp/B075BCD1LP/ref=mp_s_a_1_5?crid=13A81TEC0APYS&keywords=3%2Bprong%2Bextension%2Bcord&qid=1674789516&sprefix=3%2Bprong%2B%2Caps%2C376&sr=8-5&th=1) |
 | Ethernet Switch | 1 | $22 | [Amazon US](https://www.amazon.com/NETGEAR-Gigabit-Ethernet-Unmanaged-1000Mbps/dp/B00KFD0SMC/ref=mp_s_a_1_9?crid=25PREBQW9BS0N&keywords=netgear+ethernet+splitter&qid=1674794661&sprefix=netgear+ethern%2Caps%2C136&sr=8-9) |
-
