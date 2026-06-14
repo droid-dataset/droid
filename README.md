@@ -63,9 +63,12 @@ python scripts/evaluation/evaluate_bench.py \
   --policy-name pi0_fast_droid_jointpos \
   --operator arhan \
   --n-episodes 5 \
+  --external-camera left \
   --remote-host 0.0.0.0 \
   --remote-port 8000
 ```
+
+`--external-camera` selects which external camera (`left` or `right`) is fed to the policy — the model is trained on a single external view, so this must match the camera you want it to look through. Defaults to `left`.
 
 Each episode produces:
 

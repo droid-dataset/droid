@@ -202,17 +202,22 @@ def _run_episode(args: Args, task: TaskConfig, env: RobotEnv, policy_client, epi
 
             if actions_from_chunk_completed == 0 or actions_from_chunk_completed >= args.open_loop_horizon:
                 actions_from_chunk_completed = 0
+                # The policy expects batched inputs, so we add a leading batch dim of 1 to everything.
                 request_data = {
                     "observation/exterior_image_1_left": image_tools.resize_with_pad(
                         curr_obs[f"{args.external_camera}_image"], 224, 224
-                    ),
-                    "observation/wrist_image_left": image_tools.resize_with_pad(curr_obs["wrist_image"], 224, 224),
-                    "observation/joint_position": curr_obs["joint_position"],
-                    "observation/gripper_position": curr_obs["gripper_position"],
-                    "prompt": task.language_instruction,
+                    )[None],
+                    "observation/wrist_image_left": image_tools.resize_with_pad(curr_obs["wrist_image"], 224, 224)[
+                        None
+                    ],
+                    "observation/joint_position": curr_obs["joint_position"][None],
+                    "observation/gripper_position": curr_obs["gripper_position"][None],
+                    "prompt": [task.language_instruction],
                 }
                 with prevent_keyboard_interrupt():
                     pred_action_chunk = policy_client.infer(request_data)["actions"]
+                # Drop the batch dim back off for the single-env rollout below
+                pred_action_chunk = np.asarray(pred_action_chunk)[0]
 
             action = pred_action_chunk[actions_from_chunk_completed]
             actions_from_chunk_completed += 1
@@ -288,6 +293,8 @@ def main(args: Args):
     for ep in range(args.n_episodes):
         _run_episode(args, task, env, policy_client, episode_idx=ep)
         env.reset()
+        if ep < args.n_episodes - 1:
+            input(f"\nReset the scene for episode {ep + 2}/{args.n_episodes}, then press Enter to continue...")
 
 
 if __name__ == "__main__":
