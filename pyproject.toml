@@ -32,13 +32,11 @@ dependencies = [
     "tqdm",
     "tyro>=0.9.1",
     "zerorpc",
-    "lerobot",
     "moviepy>=2.2.1",
     "openpi-client",
 ]
 
 [tool.uv.sources]
-lerobot = { git = "https://github.com/huggingface/lerobot", rev = "0cf864870cf29f4738d3ade893e6fd13fbd7cdb5" }
 openpi-client = { path = "submodules/openpi/packages/openpi-client" }
 pyzed = { path = "pyzed-4.0-cp310-cp310-linux_x86_64.whl" }
 
