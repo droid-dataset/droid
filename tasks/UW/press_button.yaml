@@ -1,0 +1,12 @@
+institution: University of Washington
+task_id: press_button
+language_instruction: Press the yellow button
+success_criteria: |
+  The yellow button is pressed.
+max_timesteps: 450
+# Milestones are cumulative and must be ordered so that reaching milestone N
+# implies all earlier milestones were also reached. The operator picks a single
+# "highest milestone reached" after each rollout.
+milestones:
+  - name: yellow button
+    description: Gripper made contact with the yellow button.

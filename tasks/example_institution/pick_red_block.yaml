@@ -1,0 +1,16 @@
+institution: example_institution
+task_id: pick_red_block
+language_instruction: Pick up the red block and place it in the bowl.
+success_criteria: |
+  The red block ends up inside the bowl and the gripper releases it.
+max_timesteps: 450
+# Milestones are cumulative and must be ordered so that reaching milestone N
+# implies all earlier milestones were also reached. The operator picks a single
+# "highest milestone reached" after each rollout.
+milestones:
+  - name: reached_red_block
+    description: Gripper made contact with the red block.
+  - name: lifted_red_block
+    description: Red block was lifted clear off the table.
+  - name: released_in_bowl
+    description: Red block was released and rests inside the bowl.
