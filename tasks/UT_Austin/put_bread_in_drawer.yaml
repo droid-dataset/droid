@@ -1,0 +1,20 @@
+institution: University of Texas at Austin
+task_id: put_bread_in_drawer
+language_instruction: Open the drawer, Put the bread into the drawer, Close the drawer.
+success_criteria: |
+  The drawer is closed with the bread inside it.
+max_timesteps: 450
+# Milestones are cumulative and must be ordered so that reaching milestone N
+# implies all earlier milestones were also reached. The operator picks a single
+# "highest milestone reached" after each rollout.
+milestones:
+  - name: opened_drawer
+    description: Drawer was opened enough to place the bread inside.
+  - name: reached_bread
+    description: Gripper made contact with the bread.
+  - name: placed_bread_in_drawer
+    description: Bread was placed inside the open drawer.
+  - name: released_bread_in_drawer
+    description: Bread was released and remains inside the drawer.
+  - name: closed_drawer
+    description: Drawer was closed with the bread inside it.

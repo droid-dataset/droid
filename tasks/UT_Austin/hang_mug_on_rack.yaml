@@ -1,0 +1,18 @@
+institution: University of Texas at Austin
+task_id: hang_mug_on_rack
+language_instruction: Hang mug onto the mug rack.
+success_criteria: |
+  The mug is hanging securely on the mug rack and the gripper has released it.
+max_timesteps: 300
+# Milestones are cumulative and must be ordered so that reaching milestone N
+# implies all earlier milestones were also reached. The operator picks a single
+# "highest milestone reached" after each rollout.
+milestones:
+  - name: reached_mug
+    description: Gripper made contact with the mug.
+  - name: lifted_mug
+    description: Mug was lifted clear off the table.
+  - name: placed_on_rack
+    description: Mug handle was placed onto a hook or peg of the mug rack.
+  - name: released_on_rack
+    description: Mug was released and remains hanging securely on the mug rack.
