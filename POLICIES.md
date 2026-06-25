@@ -24,6 +24,19 @@ Checkpoints are downloaded on demand from `s3://openpi-assets` and cached under 
 
 ## Policy Hosting Commands
 
+### MolmoAct2-DROID
+
+The Docker path in [`docker/molmoact2/`](./docker/molmoact2/) serves MolmoAct2-DROID through the OpenPI websocket protocol expected by `scripts/evaluation/evaluate_bench.py`.
+
+```bash
+docker build -t molmoact2-droid:latest -f docker/molmoact2/Dockerfile .
+docker run --rm --gpus all --ipc=host --shm-size=8g -p 8000:8000 -v $HOME/.cache/huggingface:/root/.cache/huggingface molmoact2-droid:latest
+```
+
+Use `--remote-host <policy-server-host> --remote-port 8000` from the eval client.
+
+---
+
 ```bash
 # Pi0.5 DROID Jointpos
 XLA_PYTHON_CLIENT_MEM_FRACTION=0.95 uv run scripts/serve_policy.py policy:checkpoint --policy.config pi05_droid_jointpos_polaris --policy.dir gs://openpi-assets/checkpoints/pi05_droid_jointpos
