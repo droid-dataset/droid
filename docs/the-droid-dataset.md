@@ -76,7 +76,7 @@ DROID = {
                 		},
 		"discount": tf.Scalar(dtype=float32), # discount if provided, default to 1
                 "reward": tf.Scalar(dtype=float32), # reward if provided, 1 on final step for demos
-                "action": tf.Tensor(7, dtype=float64), # robot action, consists of [6x joint velocities, 1x gripper position]
+                "action": tf.Tensor(7, dtype=float64), # robot action, consists of [6x commanded Cartesian position, 1x commanded gripper position]
 	},
 }
 ```
